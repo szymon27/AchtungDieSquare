@@ -15,7 +15,17 @@ namespace Models
         RoomInfo,
         JoinToRoom,
         JoinToRoomResponse,
-        PlayerJoinToRoom
+        PlayerJoinToRoom,
+        LeaveRoom,
+        LeaveRoomResponse,
+        ClientLeaveRoom,
+        OwnerLeftRoom,
+        RoomDeleted,
+        EditRoom,
+        EditRoomResponse,
+        RoomEdited,
+        KickPlayer,
+        PlayerKicked
     }
 
     public class Packet

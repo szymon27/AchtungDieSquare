@@ -14,8 +14,13 @@ namespace Client.ViewModels
         public ObservableCollection<RoomInfoDTO> Rooms => _client.Rooms;
         public ObservableCollection<ClientDTO> Clients => _client.Clients;
 
+        public int ClientId => _client.CurrentClient.Id;
+        public int? ClientRoomId => _client.CurrentClient.RoomId;
+        public string ClientName => _client.CurrentClient.Name;
+
         public ICommand CreateRoomCommand { get; }
         public ICommand JoinCommand { get; }
+
 
         public LobbyViewModel(Client client, EventAggregator eventAggregator)
         {

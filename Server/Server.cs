@@ -61,7 +61,7 @@ namespace Server
 
                     Packet recvPacket = new Packet().Read(client.Connection);
 
-                    switch(recvPacket.Type)
+                    switch (recvPacket.Type)
                     {
                         case PacketType.CreateRoom:
                             {
@@ -89,17 +89,17 @@ namespace Server
                                     Games = room.Games,
                                     MaxPlayers = room.MaxPlayers,
                                     Owner = room.Owner,
-                                    Players = new ObservableCollection<PlayerDTO>() 
-                                    { 
-                                        new PlayerDTO 
-                                        { 
+                                    Players = new ObservableCollection<PlayerDTO>()
+                                    {
+                                        new PlayerDTO
+                                        {
                                             ClientDTO = new ClientDTO
-                                            { 
+                                            {
                                                 Id = room.Players[0].Client.Id,
                                                 Name = room.Players[0].Client.Name,
                                                 RoomId = room.Players[0].Client.RoomId
-                                            } 
-                                        } 
+                                            }
+                                        }
                                     }
                                 };
 
@@ -162,7 +162,7 @@ namespace Server
                                     break;
                                 }
 
-                                if(room.MaxPlayers <= room.Players.Count())
+                                if (room.MaxPlayers <= room.Players.Count())
                                 {
                                     joinRoomResponseDTO.Success = false;
                                     joinRoomResponseDTO.Content = "room is full";
@@ -254,6 +254,240 @@ namespace Server
                                 _clients.ForEach(c => roomInfoPacket.Send(c.Connection));
 
 
+
+                                break;
+                            }
+                        case PacketType.LeaveRoom:
+                            {
+                                Room room = _rooms.Where(r => r.Id == client.RoomId).FirstOrDefault();
+                                if (room == null)
+                                    break;
+                                if (room.Owner == client.Id)
+                                {
+                                    foreach(var player in room.Players.ToList())
+                                    {
+                                        _clients.Where(c => c.Id == player.Client.Id).FirstOrDefault().RoomId = null;
+
+                                        ClientDTO clientDTO = new ClientDTO
+                                        {
+                                            Id = player.Client.Id,
+                                            RoomId = null,
+                                            Name = player.Client.Name
+                                        };
+
+                                        _clients.ForEach(c => new Packet
+                                        {
+                                            Type = PacketType.ClientInfo,
+                                            Content = JsonSerializer.Serialize<ClientDTO>(clientDTO)
+                                        }.Send(c.Connection));
+
+                                        if(player.Client.Id != client.Id)
+                                        {
+                                            Packet ownerLeftRoomPacket = new Packet
+                                            {
+                                                Type = PacketType.OwnerLeftRoom,
+                                                Content = "kick"
+                                            };
+                                            ownerLeftRoomPacket.Send(player.Client.Connection);
+                                        }
+                                    }
+                                    room.Players.Clear();
+
+                                    Packet roomDeletedPacket = new Packet
+                                    {
+                                        Type = PacketType.RoomDeleted,
+                                        Content = room.Id.ToString()
+                                    };
+                                    _rooms.Remove(room);
+                                    _clients.ForEach(c => roomDeletedPacket.Send(c.Connection));
+
+                                    Packet leaveRoomResponsePacket = new Packet
+                                    {
+                                        Type = PacketType.LeaveRoomResponse,
+                                        Content = "leave"
+                                    };
+                                    leaveRoomResponsePacket.Send(client.Connection);
+                                }
+                                else
+                                {
+                                    room.Players.Remove(room.Players.Where(p => p.Client.Id == client.Id).FirstOrDefault());
+                                    room.Players.ToList().ForEach(p =>
+                                    {
+                                        new Packet
+                                        {
+                                            Type = PacketType.ClientLeaveRoom,
+                                            Content = client.Id.ToString()
+                                        }.Send(p.Client.Connection);
+                                    });
+                                    RoomInfoDTO roomInfoDTO = new RoomInfoDTO
+                                    {
+                                        Id = room.Id,
+                                        Name = room.Name,
+                                        Private = room.Private,
+                                        Games = room.Games,
+                                        MaxPlayers = room.MaxPlayers,
+                                        Players = room.Players.Count
+                                    };
+
+                                    Packet roomInfoPacket = new Packet
+                                    {
+                                        Type = PacketType.RoomInfo,
+                                        Content = JsonSerializer.Serialize<RoomInfoDTO>(roomInfoDTO)
+                                    };
+                                    _clients.ForEach(c => roomInfoPacket.Send(c.Connection));
+
+                                    client.RoomId = null;
+
+                                    ClientDTO clientDTO = new ClientDTO
+                                    {
+                                        Id = client.Id,
+                                        RoomId = client.RoomId,
+                                        Name = client.Name
+                                    };
+
+                                    _clients.ForEach(c => new Packet
+                                    {
+                                        Type = PacketType.ClientInfo,
+                                        Content = JsonSerializer.Serialize<ClientDTO>(clientDTO)
+                                    }.Send(c.Connection));
+
+                                    Packet leaveRoomResponsePacket = new Packet
+                                    {
+                                        Type = PacketType.LeaveRoomResponse,
+                                        Content = "leave"
+                                    };
+                                    leaveRoomResponsePacket.Send(client.Connection);
+                                    client.RoomId = null;
+                                } 
+                                break;
+                            }
+                        case PacketType.EditRoom:
+                            {
+                                EditRoom editRoom = JsonSerializer.Deserialize<EditRoom>(recvPacket.Content);
+                                EditRoomResponse editRoomResponse = new EditRoomResponse();
+                                Packet editRoomResponsePacket = new Packet();
+                                editRoomResponsePacket.Type = PacketType.EditRoomResponse;
+                                Room room = _rooms.Where(r => r.Id == editRoom.Id).FirstOrDefault();
+
+                                if (room == null) 
+                                    break;
+
+                                if (editRoom.MaxPlayers < room.Players.Count())
+                                {
+                                    editRoomResponse.Success = false;
+                                    editRoomResponse.Content = "too many players in room to change the maximum number of players";
+                                    editRoomResponsePacket.Content = JsonSerializer.Serialize<EditRoomResponse>(editRoomResponse);
+                                    editRoomResponsePacket.Send(client.Connection);
+                                    break;
+                                }
+
+                                room.Name = editRoom.Name;
+                                room.Private = editRoom.Private;
+                                room.Password = editRoom.Password;
+                                room.Games = editRoom.Games;
+                                room.MaxPlayers = editRoom.MaxPlayers;
+
+                                RoomInfoDTO roomInfoDTO = new RoomInfoDTO
+                                {
+                                    Id = room.Id,
+                                    Name = room.Name,
+                                    Private = room.Private,
+                                    Games = room.Games,
+                                    MaxPlayers = room.MaxPlayers,
+                                    Players = room.Players.Count
+                                };
+
+                                editRoomResponse.Success = true;
+                                editRoomResponse.Content = recvPacket.Content;
+                                editRoomResponsePacket.Content = JsonSerializer.Serialize<EditRoomResponse>(editRoomResponse);
+                                editRoomResponsePacket.Send(client.Connection);
+
+                                Packet roomInfoPacket = new Packet
+                                {
+                                    Type = PacketType.RoomInfo,
+                                    Content = JsonSerializer.Serialize<RoomInfoDTO>(roomInfoDTO)
+                                };
+                                _clients.ForEach(c => roomInfoPacket.Send(c.Connection));
+
+                                room.Players.ToList().ForEach(p =>
+                                {
+                                    new Packet
+                                    {
+                                        Type = PacketType.RoomEdited,
+                                        Content = recvPacket.Content
+                                    }.Send(p.Client.Connection);
+                                });
+
+                                break;
+                            }
+                        case PacketType.KickPlayer:
+                            {
+                                int playerId = Convert.ToInt32(recvPacket.Content);
+                                Client clientToKick = _clients.Where(c => c.Id == playerId).FirstOrDefault();
+
+                                if (clientToKick == null) 
+                                    break;
+
+                                Room room = _rooms.Where(r => r.Id == clientToKick.RoomId).FirstOrDefault();
+
+                                if (room == null)
+                                    break;
+
+                                Player player = room.Players.Where(p => p.Client.Id == playerId).FirstOrDefault();
+
+                                if (player == null)
+                                    break;
+
+                                room.Players.Remove(player);
+
+                                clientToKick.RoomId = null;
+                                room.Players.ToList().ForEach(p =>
+                                {
+                                    new Packet
+                                    {
+                                        Type = PacketType.ClientLeaveRoom,
+                                        Content = playerId.ToString()
+                                    }.Send(p.Client.Connection);
+                                });
+
+                                RoomInfoDTO roomInfoDTO = new RoomInfoDTO
+                                {
+                                    Id = room.Id,
+                                    Name = room.Name,
+                                    Private = room.Private,
+                                    Games = room.Games,
+                                    MaxPlayers = room.MaxPlayers,
+                                    Players = room.Players.Count
+                                };
+
+                                Packet roomInfoPacket = new Packet
+                                {
+                                    Type = PacketType.RoomInfo,
+                                    Content = JsonSerializer.Serialize<RoomInfoDTO>(roomInfoDTO)
+                                };
+                                _clients.ForEach(c => roomInfoPacket.Send(c.Connection));
+
+                                client.RoomId = null;
+
+                                ClientDTO clientDTO = new ClientDTO
+                                {
+                                    Id = clientToKick.Id,
+                                    RoomId = clientToKick.RoomId,
+                                    Name = clientToKick.Name
+                                };
+
+                                _clients.ForEach(c => new Packet
+                                {
+                                    Type = PacketType.ClientInfo,
+                                    Content = JsonSerializer.Serialize<ClientDTO>(clientDTO)
+                                }.Send(c.Connection));
+
+                                Packet playerKickedPacket = new Packet
+                                {
+                                    Type = PacketType.PlayerKicked,
+                                    Content = $"you have been kicked from {room.Name}"
+                                };
+                                playerKickedPacket.Send(clientToKick.Connection);
 
                                 break;
                             }

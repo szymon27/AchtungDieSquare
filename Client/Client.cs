@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 
 namespace Client
@@ -17,6 +18,10 @@ namespace Client
         public event Action RoomCreated;
         public event Action JoinToRoomSuccess;
         public event Action<string> JoinToRoomFailed;
+        public event Action BackToLobby;
+        public event Action<string> EditRoomFailed;
+        public event Action RoomEdited;
+        public event Action<string> Kicked;
 
         public int Port { get; private set; }
         public bool Connected { get; private set; }
@@ -44,6 +49,13 @@ namespace Client
             BindingOperations.EnableCollectionSynchronization(Rooms, new object());
 
             CurrentRoom = new RoomDTO();
+            CurrentRoom.Id = -1;
+            CurrentRoom.Name = string.Empty;
+            CurrentRoom.Private = false;
+            CurrentRoom.Password = string.Empty;
+            CurrentRoom.Games = -1;
+            CurrentRoom.MaxPlayers = -1;
+            CurrentRoom.Owner = -1;
             CurrentRoom.Players = new ObservableCollection<PlayerDTO>();
             BindingOperations.EnableCollectionSynchronization(CurrentRoom.Players, new object());
         }
@@ -67,9 +79,18 @@ namespace Client
             createRoomPacket.Send(_tcpClient);
         }
 
+        public void EditRoom(EditRoom room)
+        {
+            Packet editRoomPacket = new Packet
+            {
+                Type = PacketType.EditRoom,
+                Content = JsonSerializer.Serialize<EditRoom>(room)
+            };
+            editRoomPacket.Send(_tcpClient);
+        }
+
         public void Join(RoomInfoDTO room, string password)
         {
-            Console.WriteLine($"{room.Id} {password}");
             JoinRoomDTO joinRoom = new JoinRoomDTO
             {
                 Room = room,
@@ -82,6 +103,26 @@ namespace Client
                 Content = JsonSerializer.Serialize<JoinRoomDTO>(joinRoom)
             };
             joinToRoomPacket.Send(_tcpClient);
+        }
+
+        public void Leave()
+        {
+            Packet leaveRoomPacket = new Packet
+            {
+                Type = PacketType.LeaveRoom,
+                Content = "leave"
+            };
+            leaveRoomPacket.Send(_tcpClient);
+        }
+
+        public void Kick(PlayerDTO player)
+        {
+            Packet kickPlayerPacket = new Packet
+            {
+                Type = PacketType.KickPlayer,
+                Content = player.ClientDTO.Id.ToString()
+            };
+            kickPlayerPacket.Send(_tcpClient);
         }
 
         private void Start()
@@ -139,8 +180,6 @@ namespace Client
                             break;
                         }
                     case PacketType.CreateRoomResponse: {
-                            //CurrentRoom = JsonSerializer.Deserialize<RoomDTO>(recvPacket.Content);
-                            //BindingOperations.EnableCollectionSynchronization(CurrentRoom.Players, new object());
                             RoomDTO room = JsonSerializer.Deserialize<RoomDTO>(recvPacket.Content);
                             CurrentRoom.Id = room.Id;
                             CurrentRoom.Name = room.Name;
@@ -205,6 +244,86 @@ namespace Client
                         {
                             PlayerDTO playerDTO = JsonSerializer.Deserialize<PlayerDTO>(recvPacket.Content);
                             CurrentRoom.Players.Add(playerDTO);
+                            break;
+                        }
+                    case PacketType.LeaveRoomResponse:
+                        {
+                            BackToLobby?.Invoke();
+                            CurrentRoom.Id = -1;
+                            CurrentRoom.Name = string.Empty;
+                            CurrentRoom.Private = false;
+                            CurrentRoom.Password = string.Empty;
+                            CurrentRoom.Games = -1;
+                            CurrentRoom.MaxPlayers = -1;
+                            CurrentRoom.Owner = -1;
+                            CurrentRoom.Players.Clear();
+                            break;
+                        }
+                    case PacketType.ClientLeaveRoom:
+                        {
+                            int playerId = Convert.ToInt32(recvPacket.Content);
+                            CurrentRoom.Players.Remove(CurrentRoom.Players.Where(p => p.ClientDTO.Id == playerId).FirstOrDefault());
+                            break;
+                        }
+                    case PacketType.OwnerLeftRoom:
+                        {
+                            BackToLobby?.Invoke();
+                            CurrentRoom.Id = -1;
+                            CurrentRoom.Name = string.Empty;
+                            CurrentRoom.Private = false;
+                            CurrentRoom.Password = string.Empty;
+                            CurrentRoom.Games = -1;
+                            CurrentRoom.MaxPlayers = -1;
+                            CurrentRoom.Owner = -1;
+                            CurrentRoom.Players.Clear();
+                            break;
+                        }
+                    case PacketType.RoomDeleted:
+                        {
+                            int roomId = Convert.ToInt32(recvPacket.Content);
+                            Rooms.Remove(Rooms.Where(r => r.Id == roomId).FirstOrDefault());
+                            break;
+                        }
+                    case PacketType.EditRoomResponse:
+                        {
+                            EditRoomResponse editRoomResponse = JsonSerializer.Deserialize<EditRoomResponse>(recvPacket.Content);
+                            if (editRoomResponse.Success)
+                            {
+                                EditRoom room = JsonSerializer.Deserialize<EditRoom>(editRoomResponse.Content);
+                                CurrentRoom.Id = room.Id;
+                                CurrentRoom.Name = room.Name;
+                                CurrentRoom.Private = room.Private;
+                                CurrentRoom.Password = room.Password;
+                                CurrentRoom.Games = room.Games;
+                                CurrentRoom.MaxPlayers = room.MaxPlayers;
+                            }
+                            else EditRoomFailed?.Invoke(editRoomResponse.Content);
+
+                            break;
+                        }
+                    case PacketType.RoomEdited:
+                        {
+                            EditRoom room = JsonSerializer.Deserialize<EditRoom>(recvPacket.Content);
+                            CurrentRoom.Id = room.Id;
+                            CurrentRoom.Name = room.Name;
+                            CurrentRoom.Private = room.Private;
+                            CurrentRoom.Password = room.Password;
+                            CurrentRoom.Games = room.Games;
+                            CurrentRoom.MaxPlayers = room.MaxPlayers;
+                            RoomEdited?.Invoke();
+                            break;
+                        }
+                    case PacketType.PlayerKicked:
+                        {
+                            CurrentRoom.Id = -1;
+                            CurrentRoom.Name = string.Empty;
+                            CurrentRoom.Private = false;
+                            CurrentRoom.Password = string.Empty;
+                            CurrentRoom.Games = -1;
+                            CurrentRoom.MaxPlayers = -1;
+                            CurrentRoom.Owner = -1;
+                            CurrentRoom.Players.Clear();
+                            Kicked?.Invoke(recvPacket.Content);
                             break;
                         }
                     default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;

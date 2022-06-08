@@ -55,5 +55,14 @@
         <Button Content="CREATE ROOM"
                 Command="{Binding CreateRoomCommand}"
                 Margin="10,10,10,10"/>
+        <TextBlock Text="CURRENT CLIENT INFO" 
+                   Margin="2"/>
+        <TextBlock Text="{Binding ClientId}"  
+                   Margin="2"/>
+        <TextBlock Text="{Binding ClientName}" 
+                   Foreground="Aquamarine" 
+                   Margin="2"/>
+        <TextBlock Text="{Binding ClientRoomId}"  
+                   Margin="2"/>
     </StackPanel>
 </UserControl>

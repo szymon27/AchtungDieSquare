@@ -7,8 +7,32 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel>
-        <TextBlock Text="Room" FontSize="30"/>
-        <ListBox ItemsSource="{Binding Players}">
+        <StackPanel>
+            <TextBlock Text="Name"
+                   Margin="1,1,1,1"/>
+            <TextBlock Text="{Binding RoomName, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="1,1,1,1"/>
+            <TextBlock Text="Private"
+                   Margin="1,1,1,1"/>
+            <TextBlock Text="{Binding RoomPrivate, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="1,1,1,1"/>
+            <TextBlock Text="Password"
+                   Margin="1,1,1,1"/>
+            <TextBlock Text="{Binding RoomPassword, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="1,1,1,1"/>
+            <TextBlock Text="Games"
+                   Margin="1,1,1,1"/>
+            <TextBlock Text="{Binding RoomGames, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="1,1,1,1"/>
+            <TextBlock Text="MaxPlayers"
+                   Margin="1,1,1,1"/>
+            <TextBlock Text="{Binding RoomMaxPlayers, Mode=TwoWay,  UpdateSourceTrigger=PropertyChanged}"
+                 Margin="1,1,1,1"/>
+            </StackPanel>
+        <Button Content="Leave"
+                Command="{Binding LeaveCommand}"
+                Margin="2"/>
+        <ListBox x:Name="players" ItemsSource="{Binding Players}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -18,9 +42,42 @@
                         <TextBlock Text="{Binding ClientDTO.Name}" 
                                            Foreground="Aquamarine" 
                                            Margin="2"/>
+                        <Button Content="Kick"
+                                Command="{Binding ElementName=players, Path=DataContext.KickCommand}"
+                                CommandParameter="{Binding}"
+                                Margin="2"/>
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+        <StackPanel>
+            <TextBlock Text="Name"
+                   Margin="1,1,1,1"/>
+            <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                 Margin="1,1,1,1"/>
+
+            <CheckBox Content="Private" IsChecked="{Binding Private, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                 Margin="1,1,1,1"/>
+
+            <TextBlock Text="Password"
+                   Margin="1,1,1,1"/>
+            <TextBox Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                 Margin="1,1,1,1"/>
+
+            <TextBlock Text="Games"
+                   Margin="1,1,1,1"/>
+            <TextBox Text="{Binding Games, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                 Margin="1,1,1,1"/>
+
+            <TextBlock Text="Max players"
+                   Margin="1,1,1,1"/>
+            <TextBox Text="{Binding MaxPlayers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                 Margin="1,1,1,1"/>
+
+            <Button Content="Edit room"
+                Command="{Binding EditRoomCommand}"
+                IsEnabled="{Binding CanEditRoom}"
+                Margin="1,1,1,1"/>
+        </StackPanel>
     </StackPanel>
 </UserControl>
