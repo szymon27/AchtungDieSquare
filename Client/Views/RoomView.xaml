@@ -4,8 +4,15 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Client.Views"
+             xmlns:c="clr-namespace:Client.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <c:KickButtonVisibilityConverter x:Key="kickButtonVisibilityConverter"/>
+        <c:EditRoomVisibilityConverter x:Key="editRoomVisibilityConverter"/>
+    </UserControl.Resources>
+    
     <StackPanel>
         <StackPanel>
             <TextBlock Text="Name"
@@ -29,6 +36,14 @@
             <TextBlock Text="{Binding RoomMaxPlayers, Mode=TwoWay,  UpdateSourceTrigger=PropertyChanged}"
                  Margin="1,1,1,1"/>
             </StackPanel>
+        <TextBlock Text="Player"
+                   Margin="1,1,1,1"/>
+        <TextBox Text="{Binding PlayerNameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                 Margin="1,1,1,1"/>
+        <Button Content="Invite"
+                Command="{Binding InviteCommand}"
+                IsEnabled="{Binding CanInvite}"
+                Margin="2"/>
         <Button Content="Leave"
                 Command="{Binding LeaveCommand}"
                 Margin="2"/>
@@ -36,21 +51,35 @@
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding ClientDTO.Id}" 
+                        <TextBlock Text="{Binding ClientInfo.Id}" 
                                            Foreground="Aquamarine" 
                                            Margin="2"/>
-                        <TextBlock Text="{Binding ClientDTO.Name}" 
+                        <TextBlock Text="{Binding ClientInfo.Name}" 
                                            Foreground="Aquamarine" 
                                            Margin="2"/>
                         <Button Content="Kick"
                                 Command="{Binding ElementName=players, Path=DataContext.KickCommand}"
                                 CommandParameter="{Binding}"
-                                Margin="2"/>
+                                Margin="2">
+                            <Button.Visibility>
+                                <MultiBinding Converter="{StaticResource kickButtonVisibilityConverter}">
+                                    <Binding ElementName="players" Path="DataContext.OwnerId"/>
+                                    <Binding ElementName="players" Path="DataContext.ClientId"/>
+                                    <Binding Path="ClientInfo.Id"/>
+                                </MultiBinding>
+                            </Button.Visibility>
+                        </Button>
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
         <StackPanel>
+            <StackPanel.Visibility>
+                <MultiBinding Converter="{StaticResource editRoomVisibilityConverter}">
+                    <Binding Path="OwnerId"/>
+                    <Binding Path="ClientId"/>
+                </MultiBinding>
+            </StackPanel.Visibility>
             <TextBlock Text="Name"
                    Margin="1,1,1,1"/>
             <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"

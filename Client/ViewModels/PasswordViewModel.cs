@@ -14,7 +14,28 @@ namespace Client.ViewModels
             {
                 _password = value;
                 OnPropertyChanged(nameof(Password));
+                OnPropertyChanged(nameof(CanJoin));
             }
+        }
+
+        public ICommand JoinCommand { get; }
+        public bool CanJoin => !string.IsNullOrWhiteSpace(_password);
+
+        private bool _join;
+        public bool Join
+        {
+            get => _join;
+            set => _join = value;
+        }
+
+        public PasswordViewModel()
+        {
+            Join = false;
+            JoinCommand = new RelayCommand<Window>((window) =>
+            {
+                Join = true;
+                window.Close();
+            });
         }
     }
 }

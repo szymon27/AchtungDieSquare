@@ -2,6 +2,6 @@
 {
     public class PlayerDTO : BaseModel
     {
-        public ClientDTO ClientDTO { get; set; }
+        public ClientInfo ClientInfo { get; set; }
     }
 }

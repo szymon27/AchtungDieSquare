@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
@@ -72,51 +73,6 @@ namespace Client.ViewModels
         public ICommand LeaveCommand { get; }
         public ICommand KickCommand { get; }
 
-        public RoomViewModel(Client client, EventAggregator eventAggregator)
-        {
-            _client = client;
-            _eventAggregator = eventAggregator;
-            LeaveCommand = new RelayCommand(() => _client.Leave());
-
-            _errors = new Dictionary<string, List<string>>();
-            Name = _client.CurrentRoom.Name;
-            Password = _client.CurrentRoom.Password;
-            Private = _client.CurrentRoom.Private;
-            Games = _client.CurrentRoom.Games;
-            MaxPlayers = _client.CurrentRoom.MaxPlayers;
-
-            RoomName = Name;
-            RoomPassword = Password;
-            RoomPrivate = Private;
-            RoomGames = Games;
-            RoomMaxPlayers = MaxPlayers;
-
-            EditRoomCommand = new RelayCommand(() =>
-            {
-                EditRoom editRoom = new EditRoom
-                {
-                    Id = _client.CurrentRoom.Id,
-                    Name = _name,
-                    Private = _private,
-                    Password = _password,
-                    Games = _games,
-                    MaxPlayers = _maxPlayers,
-                };
-                _client.EditRoom(editRoom);
-            });
-
-            _client.EditRoomFailed += (str) => MessageBox.Show(str);
-            _client.RoomEdited += () =>
-            {
-                RoomName = _client.CurrentRoom.Name;
-                RoomPassword = _client.CurrentRoom.Password;
-                RoomPrivate = _client.CurrentRoom.Private;
-                RoomGames = _client.CurrentRoom.Games;
-                RoomMaxPlayers = _client.CurrentRoom.MaxPlayers;
-            };
-
-            KickCommand = new RelayCommand<PlayerDTO>((player) => _client.Kick(player));
-        }
 
         private Dictionary<string, List<string>> _errors;
 
@@ -189,6 +145,83 @@ namespace Client.ViewModels
         public ICommand CancelCommand { get; }
 
         public bool CanEditRoom => !this.HasErrors && !string.IsNullOrEmpty(_name);
+
+        public int ClientId => _client.CurrentClient.Id;
+        public int OwnerId => _client.CurrentRoom.Owner;
+
+        private string _playerNameId;
+        public string PlayerNameId
+        {
+            get => _playerNameId;
+            set
+            {
+                _playerNameId = value;
+                OnPropertyChanged(nameof(PlayerNameId));
+                OnPropertyChanged(nameof(CanInvite));
+            }
+        }
+
+        public ICommand InviteCommand { get; }
+        public bool CanInvite => !string.IsNullOrWhiteSpace(_playerNameId) && new Regex(@"^\w{4,16}#\d+$").IsMatch(_playerNameId);
+
+        public RoomViewModel(Client client, EventAggregator eventAggregator)
+        {
+            _client = client;
+            _eventAggregator = eventAggregator;
+            LeaveCommand = new RelayCommand(() => _client.Leave());
+
+            _errors = new Dictionary<string, List<string>>();
+            Name = _client.CurrentRoom.Name;
+            Password = _client.CurrentRoom.Password;
+            Private = _client.CurrentRoom.Private;
+            Games = _client.CurrentRoom.Games;
+            MaxPlayers = _client.CurrentRoom.MaxPlayers;
+
+            RoomName = Name;
+            RoomPassword = Password;
+            RoomPrivate = Private;
+            RoomGames = Games;
+            RoomMaxPlayers = MaxPlayers;
+
+            EditRoomCommand = new RelayCommand(() =>
+            {
+                EditRoom editRoom = new EditRoom
+                {
+                    Id = _client.CurrentRoom.Id,
+                    Name = _name,
+                    Private = _private,
+                    Password = _password,
+                    Games = _games,
+                    MaxPlayers = _maxPlayers,
+                };
+                _client.EditRoom(editRoom);
+            });
+
+            _client.EditRoomFailed += (str) => MsgBox.Error(str);
+            _client.RoomEdited += () =>
+            {
+                RoomName = _client.CurrentRoom.Name;
+                RoomPassword = _client.CurrentRoom.Password;
+                RoomPrivate = _client.CurrentRoom.Private;
+                RoomGames = _client.CurrentRoom.Games;
+                RoomMaxPlayers = _client.CurrentRoom.MaxPlayers;
+            };
+
+            KickCommand = new RelayCommand<PlayerDTO>((player) => _client.Kick(player));
+            InviteCommand = new RelayCommand(() =>
+            {
+                string[] playerNameId = _playerNameId.Split('#');
+                InvitePlayer invitePlayer = new InvitePlayer
+                {
+                    RoomId = _client.CurrentRoom.Id,
+                    PlayerId = Convert.ToInt32(playerNameId[1]),
+                    PlayerName = playerNameId[0]
+                };
+                _client.Invite(invitePlayer);
+            });
+            _client.InviteSuccess += (msg) => MsgBox.Info(msg);
+            _client.InviteFailed += (msg) => MsgBox.Error(msg);
+        }
 
         public void ValidateName()
         {

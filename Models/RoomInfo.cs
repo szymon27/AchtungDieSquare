@@ -1,6 +1,6 @@
 ﻿namespace Models
 {
-    public class RoomInfoDTO : BaseModel
+    public class RoomInfo : BaseModel
     {
         public int Id { get; set; }
         public string Name { get; set; }

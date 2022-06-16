@@ -31,14 +31,14 @@ namespace Client.ViewModels
 
             CurrentViewModel =  new ConnectToServerViewModel(_client);
 
-            _client.ConnectionFailed += () => MessageBox.Show("connection failed");
+            _client.ConnectionFailed += () => MsgBox.Error("connection failed");
             _client.ConnectionSuccess += () => CurrentViewModel = _lobbyViewModel;
             _client.Disconnect += () => CurrentViewModel = new ConnectToServerViewModel(_client);
-            _client.JoinToRoomFailed += (msg) => MessageBox.Show(msg);
+            _client.JoinToRoomFailed += (msg) => MsgBox.Error(msg);
             _client.JoinToRoomSuccess += () => CurrentViewModel = new RoomViewModel(_client, _eventAggregator);
             _client.BackToLobby += () => CurrentViewModel = _lobbyViewModel;
             _client.Kicked += (str) => {
-                MessageBox.Show(str);
+                MsgBox.Error(str);
                 CurrentViewModel = _lobbyViewModel;
             };
 

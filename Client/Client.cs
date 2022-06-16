@@ -22,13 +22,16 @@ namespace Client
         public event Action<string> EditRoomFailed;
         public event Action RoomEdited;
         public event Action<string> Kicked;
+        public event Action<string> InviteSuccess;
+        public event Action<string> InviteFailed;
+        public event Action<Invitation> InvitationDialog;
 
         public int Port { get; private set; }
         public bool Connected { get; private set; }
-        public ClientDTO CurrentClient { get; private set; }
-        public ObservableCollection<ClientDTO> Clients { get; private set; }
+        public ClientInfo CurrentClient { get; private set; }
+        public ObservableCollection<ClientInfo> Clients { get; private set; }
         public RoomDTO CurrentRoom { get; private set; }
-        public ObservableCollection<RoomInfoDTO> Rooms { get; private set; }
+        public ObservableCollection<RoomInfo> Rooms { get; private set; }
 
         private TcpClient _tcpClient;
 
@@ -36,16 +39,16 @@ namespace Client
         {
             Port = port;
             Connected = false;
-            CurrentClient = new ClientDTO
+            CurrentClient = new ClientInfo
             {
                 Id = -1,
                 Name = String.Empty,
                 RoomId = null
             };
-            Clients = new ObservableCollection<ClientDTO>();
+            Clients = new ObservableCollection<ClientInfo>();
             BindingOperations.EnableCollectionSynchronization(Clients, new object());
 
-            Rooms = new ObservableCollection<RoomInfoDTO>();           
+            Rooms = new ObservableCollection<RoomInfo>();           
             BindingOperations.EnableCollectionSynchronization(Rooms, new object());
 
             CurrentRoom = new RoomDTO();
@@ -58,6 +61,16 @@ namespace Client
             CurrentRoom.Owner = -1;
             CurrentRoom.Players = new ObservableCollection<PlayerDTO>();
             BindingOperations.EnableCollectionSynchronization(CurrentRoom.Players, new object());
+        }
+
+        public void DSC()
+        {
+            Packet disconnectPacket = new Packet
+            {
+                Type = PacketType.Disconnect,
+                Content = CurrentClient.Id.ToString()
+            };
+            disconnectPacket.Send(_tcpClient);
         }
 
         public void Connect(string name)
@@ -89,9 +102,9 @@ namespace Client
             editRoomPacket.Send(_tcpClient);
         }
 
-        public void Join(RoomInfoDTO room, string password)
+        public void Join(RoomInfo room, string password)
         {
-            JoinRoomDTO joinRoom = new JoinRoomDTO
+            JoinRoom joinRoom = new JoinRoom
             {
                 Room = room,
                 Password = password
@@ -100,7 +113,7 @@ namespace Client
             Packet joinToRoomPacket = new Packet
             {
                 Type = PacketType.JoinToRoom,
-                Content = JsonSerializer.Serialize<JoinRoomDTO>(joinRoom)
+                Content = JsonSerializer.Serialize<JoinRoom>(joinRoom)
             };
             joinToRoomPacket.Send(_tcpClient);
         }
@@ -120,9 +133,29 @@ namespace Client
             Packet kickPlayerPacket = new Packet
             {
                 Type = PacketType.KickPlayer,
-                Content = player.ClientDTO.Id.ToString()
+                Content = player.ClientInfo.Id.ToString()
             };
             kickPlayerPacket.Send(_tcpClient);
+        }
+
+        public void Invite(InvitePlayer invitePlayer) 
+        {
+            Packet invitePlayerPacket = new Packet
+            {
+                Type = PacketType.InvitePlayer,
+                Content = JsonSerializer.Serialize<InvitePlayer>(invitePlayer)
+            };
+            invitePlayerPacket.Send(_tcpClient);
+        }
+
+        public void InviteAccept(int roomId)
+        {
+            Packet inviteAcceptPacket = new Packet
+            {
+                Type = PacketType.InvitationAccept,
+                Content = roomId.ToString()
+            };
+            inviteAcceptPacket.Send(_tcpClient);
         }
 
         private void Start()
@@ -158,7 +191,7 @@ namespace Client
                 {
                     if (recvPacket.Type == PacketType.ConnectionResponse)
                     {
-                        CurrentClient.Id = JsonSerializer.Deserialize<ClientDTO>(recvPacket.Content).Id;
+                        CurrentClient.Id = JsonSerializer.Deserialize<ClientInfo>(recvPacket.Content).Id;
                         ConnectionSuccess?.Invoke();
                     }
                     else {
@@ -195,8 +228,8 @@ namespace Client
                         }
                     case PacketType.RoomInfo:
                         {
-                            RoomInfoDTO roomInfoDTO = JsonSerializer.Deserialize<RoomInfoDTO>(recvPacket.Content);
-                            RoomInfoDTO room = Rooms.Where(r => r.Id == roomInfoDTO.Id).FirstOrDefault();
+                            RoomInfo roomInfoDTO = JsonSerializer.Deserialize<RoomInfo>(recvPacket.Content);
+                            RoomInfo room = Rooms.Where(r => r.Id == roomInfoDTO.Id).FirstOrDefault();
                             if (room == null) Rooms.Add(roomInfoDTO);
                             else
                             { 
@@ -209,8 +242,8 @@ namespace Client
                             break;
                         }
                     case PacketType.ClientInfo: {
-                            ClientDTO clientDTO = JsonSerializer.Deserialize<ClientDTO>(recvPacket.Content);
-                            ClientDTO client = Clients.Where(c => c.Id == clientDTO.Id).FirstOrDefault();
+                            ClientInfo clientDTO = JsonSerializer.Deserialize<ClientInfo>(recvPacket.Content);
+                            ClientInfo client = Clients.Where(c => c.Id == clientDTO.Id).FirstOrDefault();
                             if (client == null) Clients.Add(clientDTO);
                             else
                             {
@@ -221,7 +254,7 @@ namespace Client
                         }
                     case PacketType.JoinToRoomResponse:
                         {
-                            JoinRoomResponseDTO joinRoomResponseDTO = JsonSerializer.Deserialize<JoinRoomResponseDTO>(recvPacket.Content);
+                            JoinRoomResponse joinRoomResponseDTO = JsonSerializer.Deserialize<JoinRoomResponse>(recvPacket.Content);
                             if (joinRoomResponseDTO.Success)
                             {
                                 RoomDTO room = JsonSerializer.Deserialize<RoomDTO>(joinRoomResponseDTO.Content);
@@ -262,7 +295,7 @@ namespace Client
                     case PacketType.ClientLeaveRoom:
                         {
                             int playerId = Convert.ToInt32(recvPacket.Content);
-                            CurrentRoom.Players.Remove(CurrentRoom.Players.Where(p => p.ClientDTO.Id == playerId).FirstOrDefault());
+                            CurrentRoom.Players.Remove(CurrentRoom.Players.Where(p => p.ClientInfo.Id == playerId).FirstOrDefault());
                             break;
                         }
                     case PacketType.OwnerLeftRoom:
@@ -324,6 +357,45 @@ namespace Client
                             CurrentRoom.Owner = -1;
                             CurrentRoom.Players.Clear();
                             Kicked?.Invoke(recvPacket.Content);
+                            break;
+                        }
+                    case PacketType.InvitePlayerResponse:
+                        {
+                            InvitePlayerResponse invitePlayerResponse = JsonSerializer.Deserialize<InvitePlayerResponse>(recvPacket.Content);
+                            if (invitePlayerResponse.Success) InviteSuccess?.Invoke(invitePlayerResponse.Content);
+                            else InviteFailed?.Invoke(invitePlayerResponse.Content);
+                            break;
+                        }
+                    case PacketType.Invitation:
+                        {
+                            Invitation invitation = JsonSerializer.Deserialize<Invitation>(recvPacket.Content);
+                            InvitationDialog?.Invoke(invitation);
+                            break;
+                        }
+                    case PacketType.InvitationAcceptResponse:
+                        {
+                            InvitationAcceptResponse invitationAcceptResponse = JsonSerializer.Deserialize<InvitationAcceptResponse>(recvPacket.Content);
+                            if (invitationAcceptResponse.Success)
+                            {
+                                RoomDTO room = JsonSerializer.Deserialize<RoomDTO>(invitationAcceptResponse.Content);
+                                CurrentRoom.Id = room.Id;
+                                CurrentRoom.Name = room.Name;
+                                CurrentRoom.Private = room.Private;
+                                CurrentRoom.Password = room.Password;
+                                CurrentRoom.Games = room.Games;
+                                CurrentRoom.MaxPlayers = room.MaxPlayers;
+                                CurrentRoom.Owner = room.Owner;
+                                foreach (PlayerDTO player in room.Players)
+                                    CurrentRoom.Players.Add(player);
+                                JoinToRoomSuccess?.Invoke();
+                            }
+                            else JoinToRoomFailed?.Invoke(invitationAcceptResponse.Content);
+
+                            break;
+                        }
+                    case PacketType.ClientDisconnected:
+                        {
+                            Clients.Remove(Clients.Where(c => c.Id == Convert.ToInt32(recvPacket.Content)).FirstOrDefault());
                             break;
                         }
                     default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;

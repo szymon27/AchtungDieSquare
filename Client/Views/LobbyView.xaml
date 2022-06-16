@@ -8,6 +8,10 @@
              d:DesignHeight="450" d:DesignWidth="800">
 
     <StackPanel>
+        <Button Content="Disconnect"
+            Command="{Binding DisconnectCommand}"
+            Margin="2"/>
+        
         <ListBox x:Name="rooms" ItemsSource="{Binding Rooms}">
             <ListBox.ItemTemplate>
                 <DataTemplate>

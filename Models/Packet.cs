@@ -25,7 +25,13 @@ namespace Models
         EditRoomResponse,
         RoomEdited,
         KickPlayer,
-        PlayerKicked
+        PlayerKicked,
+        InvitePlayer,
+        InvitePlayerResponse,
+        Invitation,
+        InvitationAccept,
+        InvitationAcceptResponse,
+        ClientDisconnected
     }
 
     public class Packet

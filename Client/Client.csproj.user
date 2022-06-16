@@ -19,11 +19,17 @@
     <Compile Update="Views\RoomView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Windows\InvitationWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Windows\PasswordWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Windows\InvitationWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Windows\MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
