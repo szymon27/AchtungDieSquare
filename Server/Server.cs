@@ -5,8 +5,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace Server
 {
@@ -55,10 +55,67 @@ namespace Server
                 
                 foreach (Client client in _clients.ToList())
                 {
-                    if (client.Connection.Client.Poll(10000, SelectMode.SelectRead))
+                    if (client.Connection.Client.Poll(1, SelectMode.SelectRead) && client.Connection.Available == 0)
                     {
-                        _clients.Remove(_clients.Where(c => c.Id == client.Id).First());
+                        if (client.RoomId != null)
+                        {
+                            Room room = _rooms.Where(r => r.Id == client.RoomId).First();
+                            if (room.Owner == client.Id)
+                            {
+                                foreach (var player in room.Players.ToList())
+                                {
+                                    if (player.Client.Id != client.Id)
+                                    {
+                                        Packet ownerLeftRoomPacket = new Packet
+                                        {
+                                            Type = PacketType.OwnerLeftRoom,
+                                            Content = "kick"
+                                        };
+                                        ownerLeftRoomPacket.Send(player.Client.Connection);
+                                    }
+                                }
+                                room.Players.Clear();
 
+                                Packet roomDeletedPacket = new Packet
+                                {
+                                    Type = PacketType.RoomDeleted,
+                                    Content = room.Id.ToString()
+                                };
+                                _rooms.Remove(room);
+                                _clients.Where(c => c.Id != client.Id).ToList().ForEach(c => roomDeletedPacket.Send(c.Connection));
+                            }
+                            else
+                            {
+                                room.Players.Remove(room.Players.Where(p => p.Client.Id == client.Id).FirstOrDefault());
+                                room.Players.ToList().ForEach(p =>
+                                {
+                                    new Packet
+                                    {
+                                        Type = PacketType.ClientLeaveRoom,
+                                        Content = client.Id.ToString()
+                                    }.Send(p.Client.Connection);
+                                });
+
+                                RoomInfo roomInfoDTO = new RoomInfo
+                                {
+                                    Id = room.Id,
+                                    Name = room.Name,
+                                    Private = room.Private,
+                                    Games = room.Games,
+                                    MaxPlayers = room.MaxPlayers,
+                                    Players = room.Players.Count
+                                };
+
+                                Packet roomInfoPacket = new Packet
+                                {
+                                    Type = PacketType.RoomInfo,
+                                    Content = JsonSerializer.Serialize<RoomInfo>(roomInfoDTO)
+                                };
+                                _clients.Where(c => c.Id != client.Id).ToList().ForEach(c => roomInfoPacket.Send(c.Connection));
+                            }
+                        }
+
+                        _clients.Remove(_clients.Where(c => c.Id == client.Id).First());
                         _clients.ForEach(c => new Packet
                         {
                             Type = PacketType.ClientDisconnected,
