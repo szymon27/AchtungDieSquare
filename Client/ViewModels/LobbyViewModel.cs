@@ -4,6 +4,7 @@ using Models;
 using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Linq;
 
 namespace Client.ViewModels
 {
@@ -21,7 +22,6 @@ namespace Client.ViewModels
 
         public ICommand CreateRoomCommand { get; }
         public ICommand JoinCommand { get; }
-        public ICommand DisconnectCommand { get; }
 
         public LobbyViewModel(Client client, EventAggregator eventAggregator)
         {
@@ -57,8 +57,6 @@ namespace Client.ViewModels
 
                 });
             };
-
-            DisconnectCommand = new RelayCommand(() => _client.DSC());
         }
     }
 }

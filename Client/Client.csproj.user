@@ -13,6 +13,9 @@
     <Compile Update="Views\CreateRoomView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\GameView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\LobbyView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -27,6 +30,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Views\GameView.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Windows\InvitationWindow.xaml">
       <SubType>Designer</SubType>
     </Page>

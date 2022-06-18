@@ -42,6 +42,8 @@ namespace Client.ViewModels
                 CurrentViewModel = _lobbyViewModel;
             };
 
+            _client.StartGameEvent += () => CurrentViewModel = new GameViewModel();
+
             _eventAggregator.ChangeView += (view) => {
                 if (view == "CreateNewRoom") 
                     CurrentViewModel = new CreateRoomViewModel(_client, _eventAggregator);

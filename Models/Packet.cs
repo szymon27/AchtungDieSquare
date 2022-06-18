@@ -31,7 +31,10 @@ namespace Models
         Invitation,
         InvitationAccept,
         InvitationAcceptResponse,
-        ClientDisconnected
+        ClientDisconnected,
+        StartGame,
+        ChangeColor,
+        ChangeColorResponse
     }
 
     public class Packet

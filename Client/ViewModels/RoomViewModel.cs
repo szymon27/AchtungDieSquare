@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace Client.ViewModels
 {
@@ -16,7 +17,18 @@ namespace Client.ViewModels
         private Client _client;
         private EventAggregator _eventAggregator;
 
-        public ObservableCollection<PlayerDTO> Players => _client.CurrentRoom.Players;
+        public ObservableCollection<PlayerDTO> Players  => _client.CurrentRoom.Players;
+
+        private System.Windows.Media.Color _color;
+        public System.Windows.Media.Color Color
+        {
+            get => _color;
+            set
+            {
+                _color = value;
+                OnPropertyChanged(nameof(Color));
+            }
+        }
 
         private string _roomName;
         private bool _roomPrivate;
@@ -72,7 +84,9 @@ namespace Client.ViewModels
 
         public ICommand LeaveCommand { get; }
         public ICommand KickCommand { get; }
+        public ICommand StartCommand { get; }
 
+        public bool CanStart => _client.CurrentRoom.Players.Count > 1;
 
         private Dictionary<string, List<string>> _errors;
 
@@ -164,6 +178,8 @@ namespace Client.ViewModels
         public ICommand InviteCommand { get; }
         public bool CanInvite => !string.IsNullOrWhiteSpace(_playerNameId) && new Regex(@"^\w{4,16}#\d+$").IsMatch(_playerNameId);
 
+        public ICommand ChangeColorCommand { get; }
+
         public RoomViewModel(Client client, EventAggregator eventAggregator)
         {
             _client = client;
@@ -221,6 +237,30 @@ namespace Client.ViewModels
             });
             _client.InviteSuccess += (msg) => MsgBox.Info(msg);
             _client.InviteFailed += (msg) => MsgBox.Error(msg);
+            StartCommand = new RelayCommand(() => {
+                if (_client.CurrentRoom.Players.Count > 1)
+                    _client.StartGame();
+                else
+                    MsgBox.Error("not enough players");
+            });
+
+            Models.Color color = _client.CurrentRoom.Players.Where(p => p.ClientInfo.Id == _client.CurrentClient.Id).First().Color;
+            Color = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+            ChangeColorCommand = new RelayCommand(() =>
+            {
+                Models.Color color = new Models.Color();
+                color.A = _color.A;
+                color.R = _color.R;
+                color.G = _color.G;
+                color.B = _color.B;
+                _client.ChangeColor(color);
+            });
+            _client.ChangeColorFailed += (str) => 
+            {
+                Models.Color color = _client.CurrentRoom.Players.Where(p => p.ClientInfo.Id == _client.CurrentClient.Id).First().Color;
+                Color = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+                MsgBox.Error(str);
+            };
         }
 
         public void ValidateName()

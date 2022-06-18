@@ -38,6 +38,17 @@ namespace Server
             _rooms = new List<Room>();
         }
 
+        private static Color generateColor()
+        {
+            Random random = new Random();
+            Color color = new Color();
+            color.A = 255;
+            color.R = (byte)random.Next(0, 256);
+            color.G = (byte)random.Next(0, 256);
+            color.B = (byte)random.Next(0, 256);
+            return color;
+        }
+
         public void Start()
         {
             if (_tcpListener == null)
@@ -72,8 +83,24 @@ namespace Server
                                             Content = "kick"
                                         };
                                         ownerLeftRoomPacket.Send(player.Client.Connection);
+
+                                        _clients.Where(c => c.Id == player.Client.Id).First().RoomId = null;
+
+                                        ClientInfo clientDTO = new ClientInfo
+                                        {
+                                            Id = player.Client.Id,
+                                            RoomId = null,
+                                            Name = player.Client.Name
+                                        };
+
+                                        _clients.Where(c => c.Id != client.Id).ToList().ForEach(c => new Packet
+                                        {
+                                            Type = PacketType.ClientInfo,
+                                            Content = JsonSerializer.Serialize<ClientInfo>(clientDTO)
+                                        }.Send(c.Connection));
                                     }
                                 }
+
                                 room.Players.Clear();
 
                                 Packet roomDeletedPacket = new Packet
@@ -143,7 +170,7 @@ namespace Server
                                     Games = newRoom.Games,
                                     MaxPlayers = newRoom.MaxPlayers,
                                     Owner = newRoom.Owner,
-                                    Players = new ObservableCollection<Player>() { new Player { Client = client } }
+                                    Players = new ObservableCollection<Player>() { new Player() { Client = client, Color = generateColor() } }
                                 };
                                 _rooms.Add(room);
 
@@ -165,7 +192,8 @@ namespace Server
                                                 Id = room.Players[0].Client.Id,
                                                 Name = room.Players[0].Client.Name,
                                                 RoomId = room.Players[0].Client.RoomId
-                                            }
+                                            },
+                                            Color = room.Players[0].Color
                                         }
                                     }
                                 };
@@ -254,7 +282,14 @@ namespace Server
                                     Content = JsonSerializer.Serialize<ClientInfo>(clientDTO)
                                 }.Send(c.Connection));
 
-                                room.Players.Add(new Player { Client = client });
+                                var colors = room.Players.Select(p => p.Color).ToList();
+                                Color color;
+                                do
+                                {
+                                    color = generateColor();
+                                } while (colors.Contains(color));
+
+                                room.Players.Add(new Player { Client = client, Color = color });
 
                                 RoomDTO roomDTO = new RoomDTO
                                 {
@@ -274,7 +309,8 @@ namespace Server
                                                     Id = p.Client.Id,
                                                     Name = p.Client.Name,
                                                     RoomId = p.Client.RoomId
-                                                }
+                                                },
+                                                Color = p.Color
                                             }
                                         )
                                     )
@@ -287,7 +323,8 @@ namespace Server
                                         Id = client.Id,
                                         Name = client.Name,
                                         RoomId = client.RoomId
-                                    }
+                                    },
+                                    Color = color
                                 };
 
                                 joinRoomResponseDTO.Success = true;
@@ -319,8 +356,6 @@ namespace Server
                                     Content = JsonSerializer.Serialize<RoomInfo>(roomInfoDTO)
                                 };
                                 _clients.ForEach(c => roomInfoPacket.Send(c.Connection));
-
-
 
                                 break;
                             }
@@ -574,6 +609,7 @@ namespace Server
                                     invitePlayerResponse.Content = "player does not exist";
                                     invitePlayerResponsePacket.Content = JsonSerializer.Serialize<InvitePlayerResponse>(invitePlayerResponse);
                                     invitePlayerResponsePacket.Send(client.Connection);
+                                    break;
                                 }
 
                                 if (player.RoomId != null)
@@ -651,7 +687,14 @@ namespace Server
                                     Content = JsonSerializer.Serialize<ClientInfo>(clientDTO)
                                 }.Send(c.Connection));
 
-                                room.Players.Add(new Player { Client = client });
+                                var colors = room.Players.Select(p => p.Color).ToList();
+                                Color color;
+                                do
+                                {
+                                    color = generateColor();
+                                } while (colors.Contains(color));
+
+                                room.Players.Add(new Player { Client = client, Color = color });
 
                                 RoomDTO roomDTO = new RoomDTO
                                 {
@@ -671,7 +714,8 @@ namespace Server
                                                     Id = p.Client.Id,
                                                     Name = p.Client.Name,
                                                     RoomId = p.Client.RoomId
-                                                }
+                                                },
+                                                Color = p.Color
                                             }
                                         )
                                     )
@@ -684,7 +728,8 @@ namespace Server
                                         Id = client.Id,
                                         Name = client.Name,
                                         RoomId = client.RoomId
-                                    }
+                                    },
+                                    Color = color
                                 };
                                 invitationAcceptResponse.Success = true;
                                 invitationAcceptResponse.Content = JsonSerializer.Serialize<RoomDTO>(roomDTO);
@@ -727,6 +772,87 @@ namespace Server
                                     Type = PacketType.ClientDisconnected,
                                     Content = client.Id.ToString()
                                 }.Send(c.Connection));
+                                break;
+                            }
+                        case PacketType.StartGame:
+                            {
+                                int roomId = client.RoomId.Value;
+                                Room room = _rooms.Where(r => r.Id == roomId).First();
+                                room.GameIsRunning = true;
+                                RoomInfo roomInfo = new RoomInfo
+                                {
+                                    Id = room.Id,
+                                    Name = room.Name,
+                                    Private = room.Private,
+                                    Games = room.Games,
+                                    MaxPlayers = room.MaxPlayers,
+                                    Players = room.Players.Count,
+                                    GameIsRunning = room.GameIsRunning
+                                };
+
+                                Packet roomInfoPacket = new Packet
+                                {
+                                    Type = PacketType.RoomInfo,
+                                    Content = JsonSerializer.Serialize<RoomInfo>(roomInfo)
+                                };
+                                _clients.ForEach(c => roomInfoPacket.Send(c.Connection));
+
+                                Packet startGamePacket = new Packet
+                                {
+                                    Type = PacketType.StartGame,
+                                    Content = "start game"
+                                };
+                                _rooms.Where(r => r.Id == roomId).First().Players.ToList().ForEach(p => startGamePacket.Send(p.Client.Connection));
+                                break;
+                            }
+                        case PacketType.ChangeColor:
+                            {
+                                Color color = JsonSerializer.Deserialize<Color>(recvPacket.Content);
+                                var colors = _rooms.Where(r => r.Id == client.RoomId.Value).First().Players.Select(p => p.Color);
+                                bool check = false;
+                                for(int i = 0; i < colors.Count() && !check; i++)
+                                {
+                                    Color temp = colors.ElementAt(i);
+                                    if (temp.A == color.A && temp.R == color.R && temp.G == color.G && temp.B == color.B)
+                                        check = true;
+                                }
+
+                                Packet changeColorResponsePacket = new Packet
+                                {
+                                    Type = PacketType.ChangeColorResponse
+                                };
+
+                                ChangeColorResponse changeColorResponse = new ChangeColorResponse();
+
+                                if(check)
+                                {
+                                    changeColorResponse.Success = false;
+                                    changeColorResponse.Content = "choose other color";
+                                    changeColorResponsePacket.Content = JsonSerializer.Serialize<ChangeColorResponse>(changeColorResponse);
+                                    changeColorResponsePacket.Send(client.Connection);
+                                }
+                                else
+                                {
+                                    Player player = _rooms.Where(r => r.Id == client.RoomId.Value).First().Players.Where(p => p.Client.Id == client.Id).First();
+                                    player.Color = color;
+                                    changeColorResponse.Success = true;
+                                    changeColorResponse.Content = JsonSerializer.Serialize<Color>(color);
+                                    changeColorResponsePacket.Content = JsonSerializer.Serialize<ChangeColorResponse>(changeColorResponse);
+
+                                    ChangeColor changeColor = new ChangeColor
+                                    {
+                                        Id = client.Id,
+                                        Color = color,
+                                    };
+
+                                    Packet changeColorPacket = new Packet
+                                    {
+                                        Type = PacketType.ChangeColor,
+                                        Content = JsonSerializer.Serialize<ChangeColor>(changeColor)
+                                    };
+                                    _rooms.Where(r => r.Id == client.RoomId.Value).First().Players.ToList().ForEach(p => changeColorPacket.Send(p.Client.Connection));
+                                }
+                                
                                 break;
                             }
                         default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;

@@ -8,5 +8,6 @@
         public int Games { get; set; }
         public int MaxPlayers { get; set; }
         public int Players { get; set; }
+        public bool GameIsRunning { get; set; }
     }
 }

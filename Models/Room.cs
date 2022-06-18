@@ -13,5 +13,6 @@ namespace Models
         public int MaxPlayers { get; set; }
         public int Owner { get; set; }
         public ObservableCollection<Player> Players { get; set; }
+        public bool GameIsRunning { get; set; }
     }
 }

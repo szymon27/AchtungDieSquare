@@ -5,7 +5,7 @@ using System.Windows.Data;
 
 namespace Client.Converters
 {
-    public class EditRoomVisibilityConverter : IMultiValueConverter
+    public class IsOwnerToVisibilityConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {

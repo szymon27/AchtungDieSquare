@@ -5,12 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Client.Views"
              xmlns:c="clr-namespace:Client.Converters"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 
     <UserControl.Resources>
         <c:KickButtonVisibilityConverter x:Key="kickButtonVisibilityConverter"/>
-        <c:EditRoomVisibilityConverter x:Key="editRoomVisibilityConverter"/>
+        <c:IsOwnerToVisibilityConverter x:Key="isOwnerToVisibilityConverter"/>
+        <c:MyColorToColorConverter x:Key="myColorToColorConverter"/>
     </UserControl.Resources>
     
     <StackPanel>
@@ -44,18 +46,32 @@
                 Command="{Binding InviteCommand}"
                 IsEnabled="{Binding CanInvite}"
                 Margin="2"/>
+        <Button Content="Start"
+                Command="{Binding StartCommand}"
+                Margin="2">
+            <Button.Visibility>
+                <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                    <Binding Path="OwnerId"/>
+                    <Binding Path="ClientId"/>
+                </MultiBinding>
+            </Button.Visibility>
+        </Button>
         <Button Content="Leave"
                 Command="{Binding LeaveCommand}"
+                Margin="2"/>
+        <xctk:ColorPicker SelectedColor="{Binding Color, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <Button Content="Change color"
+                Command="{Binding ChangeColorCommand}"
                 Margin="2"/>
         <ListBox x:Name="players" ItemsSource="{Binding Players}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding ClientInfo.Id}" 
-                                           Foreground="Aquamarine" 
+                                           Foreground="{Binding Color, Converter={StaticResource myColorToColorConverter}}" 
                                            Margin="2"/>
                         <TextBlock Text="{Binding ClientInfo.Name}" 
-                                           Foreground="Aquamarine" 
+                                           Foreground="{Binding Color, Converter={StaticResource myColorToColorConverter}}" 
                                            Margin="2"/>
                         <Button Content="Kick"
                                 Command="{Binding ElementName=players, Path=DataContext.KickCommand}"
@@ -75,7 +91,7 @@
         </ListBox>
         <StackPanel>
             <StackPanel.Visibility>
-                <MultiBinding Converter="{StaticResource editRoomVisibilityConverter}">
+                <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
                     <Binding Path="OwnerId"/>
                     <Binding Path="ClientId"/>
                 </MultiBinding>

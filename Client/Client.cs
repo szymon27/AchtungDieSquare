@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Data;
 
 namespace Client
@@ -25,6 +24,9 @@ namespace Client
         public event Action<string> InviteSuccess;
         public event Action<string> InviteFailed;
         public event Action<Invitation> InvitationDialog;
+        public event Action StartGameEvent;
+        public event Action ChangeColorSuccess;
+        public event Action<string> ChangeColorFailed;
 
         public int Port { get; private set; }
         public bool Connected { get; private set; }
@@ -63,14 +65,14 @@ namespace Client
             BindingOperations.EnableCollectionSynchronization(CurrentRoom.Players, new object());
         }
 
-        public void DSC()
+        public void StartGame()
         {
-            Packet disconnectPacket = new Packet
+            Packet startGamePacket = new Packet
             {
-                Type = PacketType.Disconnect,
-                Content = CurrentClient.Id.ToString()
+                Type = PacketType.StartGame,
+                Content = "start game"
             };
-            disconnectPacket.Send(_tcpClient);
+            startGamePacket.Send(_tcpClient);
         }
 
         public void Connect(string name)
@@ -158,6 +160,16 @@ namespace Client
             inviteAcceptPacket.Send(_tcpClient);
         }
 
+        public void ChangeColor(Color color)
+        {
+            Packet changeColorPacket = new Packet
+            {
+                Type = PacketType.ChangeColor,
+                Content = JsonSerializer.Serialize<Color>(color)
+            };
+            changeColorPacket.Send(_tcpClient);
+        }
+
         private void Start()
         {
             try
@@ -238,6 +250,7 @@ namespace Client
                                 room.Games = roomInfoDTO.Games;
                                 room.MaxPlayers = roomInfoDTO.MaxPlayers;
                                 room.Players = roomInfoDTO.Players;
+                                room.GameIsRunning = roomInfoDTO.GameIsRunning;
                             }
                             break;
                         }
@@ -396,6 +409,32 @@ namespace Client
                     case PacketType.ClientDisconnected:
                         {
                             Clients.Remove(Clients.Where(c => c.Id == Convert.ToInt32(recvPacket.Content)).FirstOrDefault());
+                            break;
+                        }
+                    case PacketType.StartGame:
+                        {
+                            StartGameEvent?.Invoke();
+                            CurrentRoom.GameIsRunning = true;
+                            break;
+                        }
+                    case PacketType.ChangeColorResponse:
+                        {
+                            ChangeColorResponse changeColorResponse = JsonSerializer.Deserialize<ChangeColorResponse>(recvPacket.Content);
+                            if(changeColorResponse.Success)
+                            {
+                                ChangeColorSuccess?.Invoke();
+                                CurrentRoom.Players.Where(p => p.ClientInfo.Id == CurrentClient.Id).First().Color = JsonSerializer.Deserialize<Color>(changeColorResponse.Content);
+                            }
+                            else
+                            {
+                                ChangeColorFailed?.Invoke(changeColorResponse.Content);
+                            }
+                            break;
+                        }
+                    case PacketType.ChangeColor:
+                        {
+                            ChangeColor changeColor = JsonSerializer.Deserialize<ChangeColor>(recvPacket.Content);
+                            CurrentRoom.Players.Where(p => p.ClientInfo.Id == changeColor.Id).First().Color = changeColor.Color;
                             break;
                         }
                     default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;
