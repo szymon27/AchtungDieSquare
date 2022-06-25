@@ -8,5 +8,14 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel>
         <TextBlock Text="GAME"/>
+        <Border
+            BorderThickness="5"
+            BorderBrush="Black"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Width="310"
+            Height="310">
+            <Canvas x:Name="cnv_Board" Width="300" Height="300" Background="#FFA8EDEC"/>
+        </Border>
     </StackPanel>
 </UserControl>

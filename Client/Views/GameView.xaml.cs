@@ -9,4 +9,5 @@ namespace Client.Views
             InitializeComponent();
         }
     }
+
 }
