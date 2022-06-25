@@ -6,8 +6,12 @@
              xmlns:local="clr-namespace:Client.Views"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <StackPanel>
-        <TextBlock Text="GAME"/>
+
+
+
+    <StackPanel Background="Green">
+        <TextBlock Text="Game">
+        </TextBlock>
         <Border
             BorderThickness="5"
             BorderBrush="Black"
@@ -15,7 +19,10 @@
             VerticalAlignment="Center"
             Width="310"
             Height="310">
-            <Canvas x:Name="cnv_Board" Width="300" Height="300" Background="#FFA8EDEC"/>
+            <Canvas Visibility="Visible"
+                    Focusable="True">
+                <ContentPresenter Content="{Binding Canvas}"/>
+            </Canvas>
         </Border>
     </StackPanel>
 </UserControl>
