@@ -12,6 +12,7 @@
     <StackPanel Background="Green">
         <TextBlock Text="Game">
         </TextBlock>
+        <TextBlock Text="{Binding CountDown, UpdateSourceTrigger=PropertyChanged}"/>
         <Border
             BorderThickness="5"
             BorderBrush="Black"

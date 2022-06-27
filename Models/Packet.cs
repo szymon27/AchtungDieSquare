@@ -34,7 +34,14 @@ namespace Models
         ClientDisconnected,
         StartGame,
         ChangeColor,
-        ChangeColorResponse
+        ChangeColorResponse,
+        ChangeDirection,
+        NewRound,
+        StartingCoordinates,
+        CountDown,
+        StartRound,
+        PlayerNextCoordinates,
+        PlayerDied
     }
 
     public class Packet

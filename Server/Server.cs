@@ -5,8 +5,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
-
+using System.Windows;
+using System.Windows.Controls;
 
 namespace Server
 {
@@ -170,7 +172,7 @@ namespace Server
                                     Games = newRoom.Games,
                                     MaxPlayers = newRoom.MaxPlayers,
                                     Owner = newRoom.Owner,
-                                    Players = new ObservableCollection<Player>() { new Player() { Client = client, Color = generateColor() } }
+                                    Players = new ObservableCollection<Player>() { new Player() { Client = client, Color = generateColor() }}
                                 };
                                 _rooms.Add(room);
 
@@ -787,7 +789,7 @@ namespace Server
                                     Games = room.Games,
                                     MaxPlayers = room.MaxPlayers,
                                     Players = room.Players.Count,
-                                    GameIsRunning = room.GameIsRunning
+                                    GameIsRunning = room.GameIsRunning,
                                 };
 
                                 Packet roomInfoPacket = new Packet
@@ -803,6 +805,22 @@ namespace Server
                                     Content = "start game"
                                 };
                                 _rooms.Where(r => r.Id == roomId).First().Players.ToList().ForEach(p => startGamePacket.Send(p.Client.Connection));
+                                
+                                List<Player> players = room.Players.ToList();
+                                Packet startingCoordinatesPacket = new Packet
+                                {
+                                    Type = PacketType.StartingCoordinates
+                                };
+                                List<WormPrep> wp = StartingCoordinates(players);
+
+                                foreach (Player p in players)
+                                    foreach(WormPrep w in wp)
+                                    {
+                                        startingCoordinatesPacket.Content = JsonSerializer.Serialize<WormPrep>(w);
+                                        startingCoordinatesPacket.Send(p.Client.Connection);
+                                    }
+                                
+                                Task.Factory.StartNew(() => CountDown(players));
                                 break;
                             }
                         case PacketType.ChangeColor:
@@ -855,12 +873,83 @@ namespace Server
                                 
                                 break;
                             }
+                        case PacketType.ChangeDirection:
+                            {
+                                Direction direction = (Direction)Int32.Parse(recvPacket.Content);
+                                var player = _rooms.Where(r => r.Id == client.RoomId.Value).First().Players.Where(p => p.Client.Id == client.Id).First();
+                                Direction currentDirection = player.Worm.Direction;
+                                switch (direction)
+                                {
+                                    case Direction.Up:
+                                        if (currentDirection != Direction.Down)
+                                            player.Worm.Direction = currentDirection;
+                                    break;
+                                    case Direction.Down:
+                                        if (currentDirection != Direction.Up)
+                                            player.Worm.Direction = currentDirection;
+                                        break;
+                                    case Direction.Left:
+                                        if (currentDirection != Direction.Right)
+                                            player.Worm.Direction = currentDirection;
+                                        break;
+                                    case Direction.Right:
+                                        if (currentDirection != Direction.Left)
+                                            player.Worm.Direction = currentDirection;
+                                        break;
+                                }
+                            break;
+                            }
                         default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;
                     }
                 }
             }
         }
 
+        private List<WormPrep> StartingCoordinates(List<Player> players)
+        {
+            List<WormPrep> wormPreps = new List<WormPrep>();
+            Random r = new Random();
+            int min = 4;
+            int step = 57 / players.Count;
+            int max = step;
+            foreach(Player p in players)
+            {
+                WormPrep wp = new WormPrep
+                {
+                    PlayerId = p.Client.Id,
+                    X = r.Next(min, max) * 5,
+                    Y = r.Next(4, 57) * 5,
+                    Color = p.Color
+                };
+                wormPreps.Add(wp);
+                p.Worm = new Worm(wp);
+                min += step;
+                max += step;
+            }
+            return wormPreps;
+        }
+        private void CountDown(List<Player> players)
+        {
+            Packet Packet = new Packet()
+            {
+                Type = PacketType.CountDown,
+            };
+            for (int i = 3; i > 0; i--)
+            {
+                Packet.Content = i.ToString();
+                foreach(Player p in players)
+                {
+                    Packet.Send(p.Client.Connection);
+                }
+                Thread.Sleep(1000);
+            }
+            Packet.Type = PacketType.StartRound;
+            Packet.Content = "Start!";
+            foreach (Player p in players)
+            {
+                Packet.Send(p.Client.Connection);
+            }
+        }
         private void HandleNewConnection(TcpClient tcpClient)
         {
             string name = string.Empty;

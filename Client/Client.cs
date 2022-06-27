@@ -25,6 +25,9 @@ namespace Client
         public event Action<string> InviteFailed;
         public event Action<Invitation> InvitationDialog;
         public event Action StartGameEvent;
+        public event Action<string> CountDownEvent;
+        public event Action<WormPrep> StartingPointsEvent;
+        public event Action StartRoundEvent;
         public event Action ChangeColorSuccess;
         public event Action<string> ChangeColorFailed;
 
@@ -168,6 +171,16 @@ namespace Client
                 Content = JsonSerializer.Serialize<Color>(color)
             };
             changeColorPacket.Send(_tcpClient);
+        }
+
+        public void ChangeDirection(Direction direction)
+        {
+            Packet changeDirectionPacket = new Packet
+            {
+                Type = PacketType.ChangeDirection,
+                Content = ((int)direction).ToString()
+            };
+            changeDirectionPacket.Send(_tcpClient);
         }
 
         private void Start()
@@ -435,6 +448,22 @@ namespace Client
                         {
                             ChangeColor changeColor = JsonSerializer.Deserialize<ChangeColor>(recvPacket.Content);
                             CurrentRoom.Players.Where(p => p.ClientInfo.Id == changeColor.Id).First().Color = changeColor.Color;
+                            break;
+                        }
+                    case PacketType.StartingCoordinates:
+                        {
+                            WormPrep wp = JsonSerializer.Deserialize<WormPrep>(recvPacket.Content);
+                            StartingPointsEvent?.Invoke(wp);
+                            break;
+                        }
+                    case PacketType.CountDown:
+                        {
+                            CountDownEvent?.Invoke(recvPacket.Content);
+                            break;
+                        }
+                    case PacketType.StartRound:
+                        {
+                            StartRoundEvent?.Invoke();
                             break;
                         }
                     default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;

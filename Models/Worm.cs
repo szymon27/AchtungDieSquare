@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -26,25 +27,45 @@ namespace Models
         public int Id { get; set; }
         public bool isAlive { get; set; }
 
-        public WormPart setUp()
+        public Worm(WormPrep wp)
         {
             Random r = new Random();
+            this.Id = wp.PlayerId;
+            this.color = Color.ColorToSolidColorBrush(wp.Color);
             this.isAlive = true;
             this.WormParts = new List<WormPart>();
             this.Direction = (Direction)r.Next(1, 5);
             this.WormParts.Add(new WormPart()
             {
-                Position = new Point(r.Next(4, 57) * size, r.Next(4, 57) * size),
+                Position = new Point(wp.X, wp.Y),
                 isHead = true,
-                UIElement = new Rectangle()
+                Rect = new Rect()
                 {
                     Width = size,
                     Height = size,
-                    Fill = color
                 }
             });
-            return this.WormParts.Last();
         }
+
+        //public WormPart setUp()
+        //{
+        //    Random r = new Random();
+        //    this.isAlive = true;
+        //    this.WormParts = new List<WormPart>();
+        //    this.Direction = (Direction)r.Next(1, 5);
+        //    this.WormParts.Add(new WormPart()
+        //    {
+        //        Position = new Point(r.Next(4, 57) * size, r.Next(4, 57) * size),
+        //        isHead = true,
+        //        Rect = new Rectangle()
+        //        {
+        //            Width = size,
+        //            Height = size,
+        //            Fill = color
+        //        }
+        //    });
+        //    return this.WormParts.Last();
+        //}
 
         public WormPart expandWorm()
         {
@@ -71,11 +92,10 @@ namespace Models
             WormParts.Add(new WormPart()
             {
                 Position = new Point(nextX, nextY),
-                UIElement = new Rectangle()
+                Rect = new Rect()
                 {
                     Width = size,
                     Height = size,
-                    Fill = color
                 },
                 isHead = true
             });

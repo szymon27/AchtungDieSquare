@@ -1,9 +1,13 @@
 ﻿using Client.Utilities;
 using Models;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace Client.ViewModels
 {
@@ -11,8 +15,9 @@ namespace Client.ViewModels
     {
         private Client _client;
         private EventAggregator _eventAggregator;
+        private Canvas _canvas;
+        private string _countDown;
 
-        public Canvas _canvas;
         public Canvas Canvas
         {
             get => _canvas;
@@ -22,7 +27,16 @@ namespace Client.ViewModels
                 OnPropertyChanged(nameof(Canvas));
             }
         }
-
+        public string CountDown
+        {
+            get => _countDown;
+            set
+            {
+                _countDown = value;
+                OnPropertyChanged(nameof(CountDown));
+            }
+        }
+        public List<Worm> worms = new List<Worm>();
         public GameViewModel(Client client, EventAggregator eventAggregator)
         {
             _client = client;
@@ -40,6 +54,31 @@ namespace Client.ViewModels
                 canvas.KeyDown += Canvas_KeyDown;
                 Canvas = canvas;
             });
+            _client.CountDownEvent += (sec) =>
+            {
+                CountDown = $"The game will start in {sec}";
+            };
+            _client.StartRoundEvent += () => CountDown = "Start!";
+            _client.StartingPointsEvent += (wp) =>
+            {
+                Worm worm = new Worm(wp);
+                worms.Add(worm);
+
+                WormPart start = worm.WormParts.Last();
+                this.Canvas.Visibility = Visibility.Collapsed;
+
+                    UIElement uielement = new Rectangle()
+                    {
+                        Width = 5,
+                        Height = 5,
+                        Fill = worm.color
+                    };
+                    this.Canvas.Children.Add(uielement);
+                    Canvas.SetTop(uielement, start.Position.Y);
+                    Canvas.SetLeft(uielement, start.Position.X);
+
+                this.Canvas.Visibility = Visibility.Visible;
+            };
         }
 
         private void Canvas_KeyDown(object sender, KeyEventArgs e)

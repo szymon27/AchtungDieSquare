@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Controls;
 
 namespace Models
@@ -16,14 +17,16 @@ namespace Models
         public ObservableCollection<Player> Players { get; set; }
         public bool GameIsRunning { get; set; }
 
-        private Canvas board;
+        public Canvas Board { get; set; }
         private int points = 0;
 
         public void setUpGame()
         {
-            board = new Canvas();
-            board.Height = 300;
-            board.Width = 300;
+            Board = new Canvas()
+            {
+                Height = 300,
+                Width = 300
+            };
         }
 
         public void Collision()
@@ -36,7 +39,7 @@ namespace Models
             foreach (Worm worm in wormList)
             {
                 bool collided = false;
-                WormPart head = worm.WormParts[worm.WormParts.Count - 1];
+                WormPart head = worm.WormParts.Last();
 
                 foreach (Worm w in wormList)
                 {
@@ -49,8 +52,8 @@ namespace Models
                 }
 
                 if(!collided)
-                if ((head.Position.Y < 0) || (head.Position.Y >= board.ActualHeight) ||
-                    (head.Position.X < 0) || (head.Position.X >= board.ActualWidth))
+                if ((head.Position.Y < 0) || (head.Position.Y >= Board.ActualHeight) ||
+                    (head.Position.X < 0) || (head.Position.X >= Board.ActualWidth))
                 {
                     collided = true;
                 }
