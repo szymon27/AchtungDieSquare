@@ -819,8 +819,9 @@ namespace Server
                                         startingCoordinatesPacket.Content = JsonSerializer.Serialize<WormPrep>(w);
                                         startingCoordinatesPacket.Send(p.Client.Connection);
                                     }
-                                
-                                Task.Factory.StartNew(() => CountDown(players));
+
+                                Thread countDownThread = new Thread(() => CountDown(players));
+                                countDownThread.Start();
                                 break;
                             }
                         case PacketType.ChangeColor:
@@ -928,6 +929,7 @@ namespace Server
             }
             return wormPreps;
         }
+
         private void CountDown(List<Player> players)
         {
             Packet Packet = new Packet()
@@ -950,6 +952,7 @@ namespace Server
                 Packet.Send(p.Client.Connection);
             }
         }
+
         private void HandleNewConnection(TcpClient tcpClient)
         {
             string name = string.Empty;

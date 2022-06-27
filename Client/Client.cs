@@ -251,8 +251,7 @@ namespace Client
                             RoomCreated?.Invoke();
                             break;
                         }
-                    case PacketType.RoomInfo:
-                        {
+                    case PacketType.RoomInfo:{
                             RoomInfo roomInfoDTO = JsonSerializer.Deserialize<RoomInfo>(recvPacket.Content);
                             RoomInfo room = Rooms.Where(r => r.Id == roomInfoDTO.Id).FirstOrDefault();
                             if (room == null) Rooms.Add(roomInfoDTO);
@@ -278,8 +277,7 @@ namespace Client
                             }
                             break;
                         }
-                    case PacketType.JoinToRoomResponse:
-                        {
+                    case PacketType.JoinToRoomResponse:{
                             JoinRoomResponse joinRoomResponseDTO = JsonSerializer.Deserialize<JoinRoomResponse>(recvPacket.Content);
                             if (joinRoomResponseDTO.Success)
                             {

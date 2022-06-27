@@ -54,19 +54,22 @@ namespace Client.ViewModels
                 canvas.KeyDown += Canvas_KeyDown;
                 Canvas = canvas;
             });
+
             _client.CountDownEvent += (sec) =>
             {
                 CountDown = $"The game will start in {sec}";
             };
+
             _client.StartRoundEvent += () => CountDown = "Start!";
             _client.StartingPointsEvent += (wp) =>
-            {
-                Worm worm = new Worm(wp);
-                worms.Add(worm);
+            {           
+                App.Current.Dispatcher.BeginInvoke((Action)delegate
+                {
+                    Worm worm = new Worm(wp);
+                    worms.Add(worm);
 
-                WormPart start = worm.WormParts.Last();
-                this.Canvas.Visibility = Visibility.Collapsed;
-
+                    WormPart start = worm.WormParts.Last();
+                    this.Canvas.Visibility = Visibility.Collapsed;
                     UIElement uielement = new Rectangle()
                     {
                         Width = 5,
@@ -77,7 +80,9 @@ namespace Client.ViewModels
                     Canvas.SetTop(uielement, start.Position.Y);
                     Canvas.SetLeft(uielement, start.Position.X);
 
-                this.Canvas.Visibility = Visibility.Visible;
+                    this.Canvas.Visibility = Visibility.Visible;
+                });
+
             };
         }
 
