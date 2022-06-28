@@ -4,8 +4,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Client.Views"
+             xmlns:c="clr-namespace:Client.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <c:BoolToVisibilityConverter x:Key="boolToVisibilityConverter"/>
+        <c:InverseBoolToVisibilityConverter x:Key="inverseBoolToVisibilityConverter"/>
+    </UserControl.Resources>
 
     <StackPanel>
         <ListBox x:Name="rooms" ItemsSource="{Binding Rooms}">
@@ -24,13 +30,15 @@
                         <TextBlock Text="{Binding MaxPlayers}" 
                                            Foreground="Aquamarine"
                                            Margin="2"/>
-                        <TextBlock Text="{Binding GameIsRunning}" 
-                                           Foreground="Aquamarine"
-                                           Margin="2"/>
+                        <TextBlock Text="GAME IS RUNNING" 
+                                   Foreground="Red"
+                                   Margin="2"
+                                   Visibility="{Binding GameIsRunning, Converter={StaticResource boolToVisibilityConverter}}"/>
                         <Button Content="JOIN"
                                 Command="{Binding ElementName=rooms, Path=DataContext.JoinCommand}"
                                 CommandParameter="{Binding}"
-                                Margin="2"/>
+                                Margin="2"
+                                Visibility="{Binding GameIsRunning, Converter={StaticResource inverseBoolToVisibilityConverter}}"/>
 
                     </StackPanel>
                 </DataTemplate>

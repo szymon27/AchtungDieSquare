@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows.Controls;
-using System.Windows.Threading;
 
 namespace Models
 {
@@ -30,8 +28,12 @@ namespace Models
             {
                 wormList.Add(p.Worm);
             }
+
             foreach (Worm worm in wormList)
             {
+                if (!worm.isAlive)
+                    continue;
+
                 bool collided = false;
                 WormPart head = worm.WormParts.Last();
 

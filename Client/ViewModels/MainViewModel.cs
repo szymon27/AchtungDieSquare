@@ -1,6 +1,4 @@
 ﻿using Client.Utilities;
-using System;
-using System.Windows;
 
 namespace Client.ViewModels
 {

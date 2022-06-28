@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Windows;
 using System.Windows.Input;
 
 namespace Client.ViewModels
@@ -111,6 +110,7 @@ namespace Client.ViewModels
                 };
                 _client.CreateRoom(newRoom);
             });
+
             _client.RoomCreated += () => _eventAggregator.OnChangeView("Room");
             CancelCommand = new RelayCommand(() => _eventAggregator.OnChangeView("Lobby"));
         }

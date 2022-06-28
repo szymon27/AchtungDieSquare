@@ -4,15 +4,26 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Client.Views"
+             xmlns:c="clr-namespace:Client.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 
-
+    <UserControl.Resources>
+        <c:MyColorToColorConverter x:Key="myColorToColorConverter"/>
+        <c:InverseBoolToVisibilityConverter x:Key="inverseBoolToVisibilityConverter"/>
+    </UserControl.Resources>
 
     <StackPanel Background="DimGray">
         <TextBlock Text="Game">
         </TextBlock>
-        <TextBlock Text="{Binding CountDown, UpdateSourceTrigger=PropertyChanged}" FontSize="20"/>
+        <TextBlock Text="{Binding GameMessageInfo, UpdateSourceTrigger=PropertyChanged}"
+                   FontSize="20"/>
+        
+        <Button Content="Leave"
+                Command="{Binding LeaveCommand}"
+                Margin="10,10,10,10"
+                Visibility="{Binding GameIsRunning, Converter={StaticResource inverseBoolToVisibilityConverter}}"/>
+        
         <Border
             BorderThickness="5"
             BorderBrush="Black"
@@ -25,5 +36,19 @@
                 <ContentPresenter Content="{Binding Canvas}"/>
             </Canvas>
         </Border>
+        <ListBox x:Name="players" ItemsSource="{Binding Players}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding ClientInfo.Name}" 
+                                         Foreground="{Binding Color, Converter={StaticResource myColorToColorConverter}}" 
+                                           Margin="2"/>
+                        <TextBlock Text="{Binding Points}" 
+                                           Foreground="{Binding Color, Converter={StaticResource myColorToColorConverter}}" 
+                                           Margin="2"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </StackPanel>
 </UserControl>

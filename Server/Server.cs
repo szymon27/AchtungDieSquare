@@ -7,10 +7,6 @@ using System.Net.Sockets;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace Server
 {
@@ -806,6 +802,10 @@ namespace Server
                                     Type = PacketType.StartGame,
                                     Content = "start game"
                                 };
+                                
+                                foreach(var player in room.Players)
+                                    player.Points = 0;
+
                                 _rooms.Where(r => r.Id == roomId).First().Players.ToList().ForEach(p => startGamePacket.Send(p.Client.Connection));
                                                                
                                 Thread gameThread = new Thread(() => GameLoop(roomId));
@@ -865,7 +865,6 @@ namespace Server
                         case PacketType.ChangeDirection:
                             {        
                                 Direction direction = (Direction)Int32.Parse(recvPacket.Content);
-                                Console.WriteLine(client.Id + "\nk: " + direction.ToString());
                                 var player = _rooms.Where(r => r.Id == client.RoomId.Value).First().Players.Where(p => p.Client.Id == client.Id).First();
                                 Direction currentDirection = player.Worm.Direction;
                                 switch (direction)
@@ -930,7 +929,6 @@ namespace Server
             {
                 Packet.Type = PacketType.ClearBoard;
                 Packet.Content = "ClearBoard";
-                // 1. CZYSZCZENIE CANVY I LOSOWANIE STARTOWYCH POZYCJI
                 foreach (Player p in players)
                     Packet.Send(p.Client.Connection);
 
@@ -943,9 +941,7 @@ namespace Server
                         Packet.Content = JsonSerializer.Serialize<WormMove>(w);
                         Packet.Send(p.Client.Connection);
                     }
-                //--
 
-                // 2. ODLICZANIE DO STARTU I START
                 Packet.Type = PacketType.CountDown;
                 for (int i = 3; i > 0; i--)
                 {
@@ -963,10 +959,7 @@ namespace Server
                 {
                     Packet.Send(p.Client.Connection);
                 }
-                //--
 
-
-                // 3. PETLA RUNDY
                 Packet.Type = PacketType.NextMove;
                 while (room.Collision())
                 {
@@ -976,7 +969,6 @@ namespace Server
                     {
                         if (!p.Worm.isAlive) continue;
                         WormPart wp = p.Worm.expandWorm();
-                        Console.WriteLine(p.Client.Id + "\nk: " + p.Worm.Direction.ToString());
                     }
 
                     foreach (Player p in players)
@@ -989,12 +981,9 @@ namespace Server
                         }
                     }
 
-                    Thread.Sleep(500);
+                    Thread.Sleep(100);
                 }
-                //--
 
-
-                // 4. WYSYLANIE PUNKTOW PO SKONCZONEJ RUNDZIE
                 Packet.Type = PacketType.Points;
                 foreach (Player p in players)
                     foreach (Player pl in players)
@@ -1008,8 +997,42 @@ namespace Server
                         Packet.Send(p.Client.Connection);
                     }
                 playedRounds++;
-                //--
             }
+
+            room.GameIsRunning = false;
+            RoomInfo roomInfo = new RoomInfo
+            {
+                Id = room.Id,
+                Name = room.Name,
+                Private = room.Private,
+                Games = room.Games,
+                MaxPlayers = room.MaxPlayers,
+                Players = room.Players.Count,
+                GameIsRunning = room.GameIsRunning,
+            };
+
+            Packet roomInfoPacket = new Packet
+            {
+                Type = PacketType.RoomInfo,
+                Content = JsonSerializer.Serialize<RoomInfo>(roomInfo)
+            };
+            _clients.ForEach(c => roomInfoPacket.Send(c.Connection));
+
+            Packet endGamePacket = new Packet
+            {
+                Type = PacketType.EndGame,
+            };
+
+            int highestScore = room.Players.Max(p => p.Points);
+            int winnersCount = room.Players.Where(p => p.Points == highestScore).Count();
+            if (winnersCount == room.Players.Count)
+                endGamePacket.Content = "Draw";
+            else if (winnersCount == 1)
+                endGamePacket.Content = room.Players.Where(p => p.Points == highestScore).First().Client.Name + " have won";
+            else
+                endGamePacket.Content = String.Join(", ", room.Players.Where(p => p.Points == highestScore).ToList().Select(p => p.Client.Name)) + " have won";
+
+            room.Players.ToList().ForEach(p => endGamePacket.Send(p.Client.Connection));
 
         }
 

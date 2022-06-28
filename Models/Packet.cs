@@ -40,7 +40,8 @@ namespace Models
         CountDown,
         StartRound,
         NextMove,
-        Points
+        Points,
+        EndGame
     }
 
     public class Packet

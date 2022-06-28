@@ -1,8 +1,7 @@
 ﻿using Client.Utilities;
 using Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,7 +15,9 @@ namespace Client.ViewModels
         private Client _client;
         private EventAggregator _eventAggregator;
         private Canvas _canvas;
-        private string _countDown;
+        private string _gameMessageInfo;
+
+        public ObservableCollection<PlayerDTO> Players => _client.CurrentRoom.Players;
 
         public Canvas Canvas
         {
@@ -27,15 +28,19 @@ namespace Client.ViewModels
                 OnPropertyChanged(nameof(Canvas));
             }
         }
-        public string CountDown
+        public string GameMessageInfo
         {
-            get => _countDown;
+            get => _gameMessageInfo;
             set
             {
-                _countDown = value;
-                OnPropertyChanged(nameof(CountDown));
+                _gameMessageInfo = value;
+                OnPropertyChanged(nameof(GameMessageInfo));
             }
         }
+
+        public ICommand LeaveCommand { get; }
+        public bool GameIsRunning => _client.CurrentRoom.GameIsRunning;
+
         public GameViewModel(Client client, EventAggregator eventAggregator)
         {
             _client = client;
@@ -43,10 +48,17 @@ namespace Client.ViewModels
 
             _client.CountDownEvent += (sec) =>
             {
-                CountDown = $"The round will start in {sec}";
+                GameMessageInfo = $"The round will start in {sec}";
             };
 
-            _client.StartRoundEvent += () => CountDown = "Start!";
+            LeaveCommand = new RelayCommand(() =>  _eventAggregator.OnChangeView("Room"));
+
+            _client.StartRoundEvent += () => 
+            {
+                OnPropertyChanged(nameof(GameIsRunning));
+                GameMessageInfo = "Start!";
+            };
+
             _client.NextMoveEvent += (wm) =>
             {           
                 App.Current.Dispatcher.BeginInvoke((Action)delegate
@@ -80,6 +92,12 @@ namespace Client.ViewModels
                     Canvas = canvas;
                     Canvas.Focus();
                 });
+            };
+
+            _client.EndGameEvent += (str) =>
+            {
+                GameMessageInfo = str;
+                OnPropertyChanged(nameof(GameIsRunning));
             };
         }
 

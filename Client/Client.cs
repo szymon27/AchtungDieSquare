@@ -31,6 +31,7 @@ namespace Client
         public event Action ClearBoardEvent;
         public event Action ChangeColorSuccess;
         public event Action<string> ChangeColorFailed;
+        public event Action<string> EndGameEvent;
 
         public int Port { get; private set; }
         public bool Connected { get; private set; }
@@ -426,6 +427,8 @@ namespace Client
                     case PacketType.StartGame:
                         {
                             StartGameEvent?.Invoke();
+                            foreach (var player in CurrentRoom.Players)
+                                player.Points = 0;
                             CurrentRoom.GameIsRunning = true;
                             break;
                         }
@@ -474,6 +477,12 @@ namespace Client
                     case PacketType.ClearBoard:
                         {
                             ClearBoardEvent?.Invoke();
+                            break;
+                        }
+                    case PacketType.EndGame:
+                        {
+                            CurrentRoom.GameIsRunning = false;
+                            EndGameEvent?.Invoke(recvPacket.Content);
                             break;
                         }
                     default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;
