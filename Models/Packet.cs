@@ -36,12 +36,11 @@ namespace Models
         ChangeColor,
         ChangeColorResponse,
         ChangeDirection,
-        NewRound,
-        StartingCoordinates,
+        ClearBoard,
         CountDown,
         StartRound,
-        PlayerNextCoordinates,
-        PlayerDied
+        NextMove,
+        Points
     }
 
     public class Packet

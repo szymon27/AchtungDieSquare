@@ -9,7 +9,8 @@ namespace Models
 {
     public class WormMove
     {
-        public Point Point { get; set; }
-        public int PlayerId { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public Color Color { get; set; }
     }
 }

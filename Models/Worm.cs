@@ -20,24 +20,32 @@ namespace Models
     public class Worm
     {
         private const int size = 5;
+        private WormPart head;
 
         public List<WormPart> WormParts { get; set; }
-        public SolidColorBrush color { get; set; }
+        public Color Color { get; set; }
         public Direction Direction { get; set; }
         public int Id { get; set; }
         public bool isAlive { get; set; }
-
-        public Worm(WormPrep wp)
+        public WormMove GetWormMove()
+        {
+            return new WormMove
+            {
+                X = (int)head.Position.X,
+                Y = (int)head.Position.Y,
+                Color = Color
+            };
+        }
+        public Worm(WormMove wm)
         {
             Random r = new Random();
-            this.Id = wp.PlayerId;
-            this.color = Color.ColorToSolidColorBrush(wp.Color);
+            this.Color = wm.Color;
             this.isAlive = true;
             this.WormParts = new List<WormPart>();
             this.Direction = (Direction)r.Next(1, 5);
             this.WormParts.Add(new WormPart()
             {
-                Position = new Point(wp.X, wp.Y),
+                Position = new Point(wm.X, wm.Y),
                 isHead = true,
                 Rect = new Rect()
                 {
@@ -45,31 +53,11 @@ namespace Models
                     Height = size,
                 }
             });
+            head = this.WormParts.Last();
         }
-
-        //public WormPart setUp()
-        //{
-        //    Random r = new Random();
-        //    this.isAlive = true;
-        //    this.WormParts = new List<WormPart>();
-        //    this.Direction = (Direction)r.Next(1, 5);
-        //    this.WormParts.Add(new WormPart()
-        //    {
-        //        Position = new Point(r.Next(4, 57) * size, r.Next(4, 57) * size),
-        //        isHead = true,
-        //        Rect = new Rectangle()
-        //        {
-        //            Width = size,
-        //            Height = size,
-        //            Fill = color
-        //        }
-        //    });
-        //    return this.WormParts.Last();
-        //}
 
         public WormPart expandWorm()
         {
-            WormPart head = WormParts.Last();
             double nextX = head.Position.X;
             double nextY = head.Position.Y;
 
@@ -99,7 +87,8 @@ namespace Models
                 },
                 isHead = true
             });
-            return WormParts.Last();
+            head = WormParts.Last();
+            return head;
         }
     }
 }

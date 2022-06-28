@@ -4,5 +4,6 @@
     {
         public ClientInfo ClientInfo { get; set; }
         public Color Color { get; set; }
+        public int Points { get; set; }
     }
 }

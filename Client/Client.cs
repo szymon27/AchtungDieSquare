@@ -26,8 +26,9 @@ namespace Client
         public event Action<Invitation> InvitationDialog;
         public event Action StartGameEvent;
         public event Action<string> CountDownEvent;
-        public event Action<WormPrep> StartingPointsEvent;
         public event Action StartRoundEvent;
+        public event Action<WormMove> NextMoveEvent;
+        public event Action ClearBoardEvent;
         public event Action ChangeColorSuccess;
         public event Action<string> ChangeColorFailed;
 
@@ -448,12 +449,6 @@ namespace Client
                             CurrentRoom.Players.Where(p => p.ClientInfo.Id == changeColor.Id).First().Color = changeColor.Color;
                             break;
                         }
-                    case PacketType.StartingCoordinates:
-                        {
-                            WormPrep wp = JsonSerializer.Deserialize<WormPrep>(recvPacket.Content);
-                            StartingPointsEvent?.Invoke(wp);
-                            break;
-                        }
                     case PacketType.CountDown:
                         {
                             CountDownEvent?.Invoke(recvPacket.Content);
@@ -462,6 +457,23 @@ namespace Client
                     case PacketType.StartRound:
                         {
                             StartRoundEvent?.Invoke();
+                            break;
+                        }
+                    case PacketType.NextMove:
+                        {
+                            WormMove wm = JsonSerializer.Deserialize<WormMove>(recvPacket.Content);
+                            NextMoveEvent?.Invoke(wm);
+                            break;
+                        }
+                    case PacketType.Points:
+                        {
+                            PointsDTO pointsDTO = JsonSerializer.Deserialize<PointsDTO>(recvPacket.Content);
+                            CurrentRoom.Players.Where(p => p.ClientInfo.Id == pointsDTO.PlayerId).First().Points = pointsDTO.Points;
+                            break;
+                        }
+                    case PacketType.ClearBoard:
+                        {
+                            ClearBoardEvent?.Invoke();
                             break;
                         }
                     default: Console.WriteLine($"{recvPacket.Type} {recvPacket.Content}"); break;

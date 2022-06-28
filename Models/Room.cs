@@ -2,11 +2,15 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace Models
 {
     public class Room
     {
+        private const int Board_W = 300;
+        private const int Board_H = 300;
+
         public int Id { get; set; }
         public string Name { get; set; }
         public bool Private { get; set; }
@@ -17,19 +21,9 @@ namespace Models
         public ObservableCollection<Player> Players { get; set; }
         public bool GameIsRunning { get; set; }
 
-        public Canvas Board { get; set; }
         private int points = 0;
 
-        public void setUpGame()
-        {
-            Board = new Canvas()
-            {
-                Height = 300,
-                Width = 300
-            };
-        }
-
-        public void Collision()
+        public bool Collision()
         {
             List<Worm> wormList = new List<Worm>();
             foreach (Player p in Players)
@@ -52,8 +46,8 @@ namespace Models
                 }
 
                 if(!collided)
-                if ((head.Position.Y < 0) || (head.Position.Y >= Board.ActualHeight) ||
-                    (head.Position.X < 0) || (head.Position.X >= Board.ActualWidth))
+                if ((head.Position.Y < 0) || (head.Position.Y >= Board_H) ||
+                    (head.Position.X < 0) || (head.Position.X >= Board_W))
                 {
                     collided = true;
                 }
@@ -61,10 +55,20 @@ namespace Models
                 if (collided)
                     foreach (Player p in Players)
                         if (p.Client.Id == worm.Id)
+                        {
+                            worm.isAlive = false;
                             p.Points += points++;
-
+                        }
+                
             }
 
+            if (Players.Where(p => p.Worm.isAlive).Count() == 1)
+            {
+                Players.Where(p => p.Worm.isAlive).First().Points += points;
+                points = 0;
+                return false;
+            }
+            else return true;
         }
     }
 }

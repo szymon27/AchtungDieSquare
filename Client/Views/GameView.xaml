@@ -9,7 +9,7 @@
 
 
 
-    <StackPanel Background="Green">
+    <StackPanel Background="DimGray">
         <TextBlock Text="Game">
         </TextBlock>
         <TextBlock Text="{Binding CountDown, UpdateSourceTrigger=PropertyChanged}" FontSize="20"/>
