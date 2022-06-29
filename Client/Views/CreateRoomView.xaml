@@ -4,11 +4,30 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Client.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             xmlns:components="clr-namespace:PasswordBoxMVVM.Components;assembly=PasswordBoxMVVM"
+            mc:Ignorable="d" 
+             d:DesignHeight="360" d:DesignWidth="460">
 
     <UserControl.Resources>
         <Style TargetType="{x:Type TextBox}">
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="FontSize" Value="22"/>
+                <Setter Property="Width" Value="200"/>
+                <Style.Triggers>
+                    <Trigger Property="Validation.HasError" Value="true">
+                        <Setter Property="ToolTip"
+                            Value="{Binding RelativeSource={x:Static RelativeSource.Self},
+                            Path=(Validation.Errors)/ErrorContent}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        
+        <Style TargetType="{x:Type components:BindablePasswordBox}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="Width" Value="200"/>
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="true">
                     <Setter Property="ToolTip"
@@ -17,39 +36,79 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style TargetType="{x:Type StackPanel}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style TargetType="{x:Type CheckBox}">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="LayoutTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="2" ScaleY="2"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="BorderBrush" Value="Red"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Width" Value="200"/>
+        </Style>
     </UserControl.Resources>
 
-    <StackPanel>
-        <TextBlock Text="Name"
-                   Margin="10,10,10,10"/>
-        <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="10,10,10,10"/>
-
-        <CheckBox Content="Private" IsChecked="{Binding Private, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="10,10,10,10"/>
-
-        <TextBlock Text="Password"
-                   Margin="10,10,10,10"/>
-        <TextBox Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="10,10,10,10"/>
-
-        <TextBlock Text="Games"
-                   Margin="10,10,10,10"/>
-        <TextBox Text="{Binding Games, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="10,10,10,10"/>
-
-        <TextBlock Text="Max players"
-                   Margin="10,10,10,10"/>
-        <TextBox Text="{Binding MaxPlayers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="10,10,10,10"/>
-        
-        <Button Content="Create new room"
-                Command="{Binding CreateRoomCommand}"
-                IsEnabled="{Binding CanCreateRoom}"
-                Margin="10,10,10,10"/>
-        
-        <Button Content="Cancel"
-                Command="{Binding CancelCommand}"
-                Margin="10,10,10,10"/>
+    <StackPanel Orientation="Vertical">
+        <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Name"/>
+                <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+            </StackPanel>
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <TextBlock/>
+                <CheckBox Content="Private" IsChecked="{Binding Private, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Games"/>
+                <TextBox Text="{Binding Games, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+            </StackPanel>
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Password"/>
+                <components:BindablePasswordBox Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Max players"/>
+                <TextBox Text="{Binding MaxPlayers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"/>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Vertical">
+                <Button Content="CREATE"
+                        Command="{Binding CreateRoomCommand}"
+                        IsEnabled="{Binding CanCreateRoom}"/>
+            </StackPanel>
+            <StackPanel Orientation="Vertical">
+                <Button Content="CANCEL"
+                        Command="{Binding CancelCommand}"/>
+            </StackPanel>
+        </StackPanel>
     </StackPanel>
 </UserControl>

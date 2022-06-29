@@ -5,17 +5,44 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client.Windows"
         mc:Ignorable="d"
-        Title="InvitationWindow" Height="450" Width="800">
-    
-    <StackPanel>
+        Title="Achtung Die Square"
+        Height="140" 
+        Width="300"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <Style TargetType="{x:Type StackPanel}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="BorderBrush" Value="Red"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Orientation="Vertical">
         <TextBlock Text="{Binding Text}"/>
-        <Button Content="Accept"
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+        <Button Content="ACCEPT"
                 Command="{Binding AcceptCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
-                Margin="10,10,10,10"/>
-        <Button Content="Decline"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
+        <Button Content="DECLINE"
                 Command="{Binding DeclineCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
-                Margin="10,10,10,10"/>
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"/>
+        </StackPanel>
     </StackPanel>
 </Window>

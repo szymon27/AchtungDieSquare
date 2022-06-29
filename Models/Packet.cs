@@ -64,28 +64,34 @@ namespace Models
             typeBuffer.CopyTo(buffer, lengthBuffer.Length);
             contentBuffer.CopyTo(buffer, lengthBuffer.Length + typeBuffer.Length);
 
-            tcpClient.GetStream().Write(buffer, 0, buffer.Length);
+            try { tcpClient.GetStream().Write(buffer, 0, buffer.Length); }
+            catch { }
         }
 
         public static Packet Read(this Packet packet, TcpClient tcpClient)
         {
-            byte[] lengthBuffer = new byte[2];
-            tcpClient.GetStream().Read(lengthBuffer, 0, lengthBuffer.Length);
-            ushort length = BitConverter.ToUInt16(lengthBuffer);
+            try {
+                byte[] lengthBuffer = new byte[2];
+                tcpClient.GetStream().Read(lengthBuffer, 0, lengthBuffer.Length);
+                ushort length = BitConverter.ToUInt16(lengthBuffer);
 
-            byte[] typeBuffer = new byte[2];
-            tcpClient.GetStream().Read(typeBuffer, 0, typeBuffer.Length);
-            PacketType packetType = (PacketType)BitConverter.ToUInt16(typeBuffer);
+                byte[] typeBuffer = new byte[2];
+                tcpClient.GetStream().Read(typeBuffer, 0, typeBuffer.Length);
+                PacketType packetType = (PacketType)BitConverter.ToUInt16(typeBuffer);
+                byte[] contentBuffer = new byte[length];
+                tcpClient.GetStream().Read(contentBuffer, 0, contentBuffer.Length);
+                string content = Encoding.UTF8.GetString(contentBuffer);
 
-            byte[] contentBuffer = new byte[length];
-            tcpClient.GetStream().Read(contentBuffer, 0, contentBuffer.Length);
-            string content = Encoding.UTF8.GetString(contentBuffer);
-
-            return new Packet
+                return new Packet
+                {
+                    Type = packetType,
+                    Content = content
+                };
+            }
+            catch
             {
-                Type = packetType,
-                Content = content
-            };
+                return null;
+            }
         }
     }
 }

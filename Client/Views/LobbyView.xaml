@@ -6,15 +6,154 @@
              xmlns:local="clr-namespace:Client.Views"
              xmlns:c="clr-namespace:Client.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="460">
 
     <UserControl.Resources>
         <c:BoolToVisibilityConverter x:Key="boolToVisibilityConverter"/>
         <c:InverseBoolToVisibilityConverter x:Key="inverseBoolToVisibilityConverter"/>
+        <c:ClientIdNameConverter x:Key="clientIdNameConverter"/>
+        <c:PlayersInRoomConverter x:Key="playersInRoomConverter"/>
+        <c:BoolToYesNoConverter x:Key="boolToYesNoConverter"/>
+
+        <Style TargetType="{x:Type StackPanel}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="BorderBrush" Value="Red"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        
+        <Style TargetType="{x:Type DataGridRow}">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        
     </UserControl.Resources>
 
-    <StackPanel>
-        <ListBox x:Name="rooms" ItemsSource="{Binding Rooms}">
+    <StackPanel Orientation="Vertical" Height="440">
+        <StackPanel Orientation="Horizontal">
+            <StackPanel Width="200" VerticalAlignment="Center">
+                <TextBlock>
+                    <TextBlock.Text>
+                        <MultiBinding Converter="{StaticResource clientIdNameConverter}">
+                            <Binding Path="ClientName"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+            </StackPanel>
+            <StackPanel Width="200">
+                <Button Content="CREATE ROOM"
+                    Command="{Binding CreateRoomCommand}"/>
+            </StackPanel>
+        </StackPanel>
+
+
+        <DataGrid x:Name="rooms"
+                  ItemsSource="{Binding Rooms}"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False"
+                  Width="470"
+                  Margin="-10,0,0,0">
+
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="10" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" Text=""/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Name" Width="70" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Name}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Password" Width="70" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Private, Converter={StaticResource boolToYesNoConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Games" Width="70" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Games}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Players" Width="70" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center">
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource playersInRoomConverter}">
+                                        <Binding Path="Players"/>
+                                        <Binding Path="MaxPlayers"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+
+                <DataGridTemplateColumn Width="*" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="GAME IS RUNNING" 
+                                       Foreground="Red"
+                                       Visibility="{Binding GameIsRunning, Converter={StaticResource boolToVisibilityConverter}}"/>
+                                <Button Content="JOIN"
+                                        Command="{Binding ElementName=rooms, Path=DataContext.JoinCommand}"
+                                        CommandParameter="{Binding}"
+                                        Visibility="{Binding GameIsRunning, Converter={StaticResource inverseBoolToVisibilityConverter}}"
+                                        Height="30"
+                                        FontSize="12"
+                                        Padding="3"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!--<ListBox x:Name="rooms" ItemsSource="{Binding Rooms}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -43,9 +182,9 @@
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
-        </ListBox>
+        </ListBox>-->
 
-        <ListBox ItemsSource="{Binding Clients}">
+        <!--<ListBox ItemsSource="{Binding Clients}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -61,19 +200,18 @@
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
-        </ListBox>
+        </ListBox>-->
 
-        <Button Content="CREATE ROOM"
-                Command="{Binding CreateRoomCommand}"
-                Margin="10,10,10,10"/>
-        <TextBlock Text="CURRENT CLIENT INFO" 
-                   Margin="2"/>
-        <TextBlock Text="{Binding ClientId}"  
+
+        <!--<TextBlock Text="CURRENT CLIENT INFO" 
+                   Margin="2"/>-->
+        <!--<TextBlock Text="{Binding ClientId}"  
                    Margin="2"/>
         <TextBlock Text="{Binding ClientName}" 
                    Foreground="Aquamarine" 
-                   Margin="2"/>
-        <TextBlock Text="{Binding ClientRoomId}"  
-                   Margin="2"/>
+                   Margin="2"/>-->
+
+        <!--<TextBlock Text="{Binding ClientRoomId}"  
+                   Margin="2"/>-->
     </StackPanel>
 </UserControl>

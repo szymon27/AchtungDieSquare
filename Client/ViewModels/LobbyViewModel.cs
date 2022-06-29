@@ -13,10 +13,10 @@ namespace Client.ViewModels
         private EventAggregator _eventAggregator;
 
         public ObservableCollection<RoomInfo> Rooms => _client.Rooms;
-        public ObservableCollection<ClientInfo> Clients => _client.Clients;
+        //public ObservableCollection<ClientInfo> Clients => _client.Clients;
 
         public int ClientId => _client.CurrentClient.Id;
-        public int? ClientRoomId => _client.CurrentClient.RoomId;
+        //public int? ClientRoomId => _client.CurrentClient.RoomId;
         public string ClientName => _client.CurrentClient.Name;
 
         public ICommand CreateRoomCommand { get; }

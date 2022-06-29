@@ -6,123 +6,271 @@
              xmlns:local="clr-namespace:Client.Views"
              xmlns:c="clr-namespace:Client.Converters"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:components="clr-namespace:PasswordBoxMVVM.Components;assembly=PasswordBoxMVVM"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="550" d:DesignWidth="460">
 
     <UserControl.Resources>
         <c:KickButtonVisibilityConverter x:Key="kickButtonVisibilityConverter"/>
         <c:IsOwnerToVisibilityConverter x:Key="isOwnerToVisibilityConverter"/>
         <c:MyColorToColorConverter x:Key="myColorToColorConverter"/>
+
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Width" Value="200"/>
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="true">
+                    <Setter Property="ToolTip"
+                            Value="{Binding RelativeSource={x:Static RelativeSource.Self},
+                            Path=(Validation.Errors)/ErrorContent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type components:BindablePasswordBox}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Width" Value="200"/>
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="true">
+                    <Setter Property="ToolTip"
+                            Value="{Binding RelativeSource={x:Static RelativeSource.Self},
+                            Path=(Validation.Errors)/ErrorContent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type StackPanel}">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="Black"/>
+        </Style>
+
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style TargetType="{x:Type CheckBox}">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="LayoutTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="Red"/>
+            <Setter Property="BorderBrush" Value="Red"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="1"/>
+            <Setter Property="Width" Value="200"/>
+            <Setter Property="Height" Value="25"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
     </UserControl.Resources>
     
-    <StackPanel>
-        <StackPanel>
-            <TextBlock Text="Name"
-                   Margin="1,1,1,1"/>
-            <TextBlock Text="{Binding RoomName, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="1,1,1,1"/>
-            <TextBlock Text="Private"
-                   Margin="1,1,1,1"/>
-            <TextBlock Text="{Binding RoomPrivate, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="1,1,1,1"/>
-            <TextBlock Text="Password"
-                   Margin="1,1,1,1"/>
-            <TextBlock Text="{Binding RoomPassword, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="1,1,1,1"/>
-            <TextBlock Text="Games"
-                   Margin="1,1,1,1"/>
-            <TextBlock Text="{Binding RoomGames, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="1,1,1,1"/>
-            <TextBlock Text="MaxPlayers"
-                   Margin="1,1,1,1"/>
-            <TextBlock Text="{Binding RoomMaxPlayers, Mode=TwoWay,  UpdateSourceTrigger=PropertyChanged}"
-                 Margin="1,1,1,1"/>
+    <StackPanel Orientation="Vertical" Height="450">
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" Height="30">
+                <TextBlock Text="Name:" 
+                           Width="130"/>
+                <TextBlock Text="{Binding RoomName, UpdateSourceTrigger=PropertyChanged}" 
+                           Width="130"/>
+                <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                         Width="130">
+                    <TextBox.Visibility>
+                        <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                            <Binding Path="OwnerId"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </TextBox.Visibility>
+                </TextBox>
             </StackPanel>
-        <TextBlock Text="Player"
-                   Margin="1,1,1,1"/>
-        <TextBox Text="{Binding PlayerNameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="1,1,1,1"/>
-        <Button Content="Invite"
-                Command="{Binding InviteCommand}"
-                IsEnabled="{Binding CanInvite}"
-                Margin="2"/>
-        <Button Content="Start"
-                Command="{Binding StartCommand}"
-                Margin="2">
-            <Button.Visibility>
-                <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
-                    <Binding Path="OwnerId"/>
-                    <Binding Path="ClientId"/>
-                </MultiBinding>
-            </Button.Visibility>
-        </Button>
-        <Button Content="Leave"
-                Command="{Binding LeaveCommand}"
-                Margin="2"/>
-        <xctk:ColorPicker SelectedColor="{Binding Color, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-        <Button Content="Change color"
-                Command="{Binding ChangeColorCommand}"
-                Margin="2"/>
-        <ListBox x:Name="players" ItemsSource="{Binding Players}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding ClientInfo.Id}" 
-                                           Foreground="{Binding Color, Converter={StaticResource myColorToColorConverter}}" 
-                                           Margin="2"/>
-                        <TextBlock Text="{Binding ClientInfo.Name}" 
-                                           Foreground="{Binding Color, Converter={StaticResource myColorToColorConverter}}" 
-                                           Margin="2"/>
-                        <Button Content="Kick"
+
+            <StackPanel Orientation="Horizontal" Height="30">
+                <TextBlock Text="Private:" 
+                           Width="130"/>
+                <TextBlock Text="{Binding RoomPrivate, UpdateSourceTrigger=PropertyChanged}" 
+                           Width="130"/>
+                <CheckBox Content="Private" IsChecked="{Binding Private, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}">
+                    <CheckBox.Visibility>
+                        <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                            <Binding Path="OwnerId"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </CheckBox.Visibility>
+                </CheckBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Height="30">
+                <TextBlock Text="Password:" 
+                           Width="130"/>
+                <TextBlock Text="{Binding RoomPassword, UpdateSourceTrigger=PropertyChanged}" 
+                           Width="130"/>
+                <components:BindablePasswordBox Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                         Width="130">
+                    <components:BindablePasswordBox.Visibility>
+                        <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                            <Binding Path="OwnerId"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </components:BindablePasswordBox.Visibility>
+                </components:BindablePasswordBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Height="30">
+                <TextBlock Text="Games:" 
+                           Width="130"/>
+                <TextBlock Text="{Binding RoomGames, UpdateSourceTrigger=PropertyChanged}" 
+                           Width="130"/>
+                <TextBox Text="{Binding Games, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                         Width="130">
+                    <TextBox.Visibility>
+                        <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                            <Binding Path="OwnerId"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </TextBox.Visibility>
+                </TextBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Height="30">
+                <TextBlock Text="Max players:" 
+                           Width="130"/>
+                <TextBlock Text="{Binding RoomMaxPlayers, UpdateSourceTrigger=PropertyChanged}" 
+                           Width="130"/>
+                <TextBox Text="{Binding MaxPlayers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                         Width="130">
+                    <TextBox.Visibility>
+                        <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                            <Binding Path="OwnerId"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </TextBox.Visibility>
+                </TextBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Height="40">
+                <TextBox Text="{Binding PlayerNameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                         Width="130"/>
+                <Button Content="INVITE"
+                        Command="{Binding InviteCommand}"
+                        IsEnabled="{Binding CanInvite}"
+                        Width="130"/>
+                <Button Content="EDIT ROOM"
+                        Command="{Binding EditRoomCommand}"
+                        IsEnabled="{Binding CanEditRoom}"
+                        Width="130">
+                    <Button.Visibility>
+                        <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                            <Binding Path="OwnerId"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </Button.Visibility>
+                </Button>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Height="40">
+                <StackPanel Orientation="Horizontal" Width="130">
+                    <xctk:ColorPicker SelectedColor="{Binding Color, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Width="70"
+                                      Height="25"/>
+                    <Button Content="SET"
+                            Command="{Binding ChangeColorCommand}"
+                            Width="50"
+                            Margin="5,0,0,0"/>
+                </StackPanel>
+                <Button Content="LEAVE"
+                        Command="{Binding LeaveCommand}"
+                        Width="130"/>
+                <Button Content="START"
+                    Command="{Binding StartCommand}"
+                    Width="130">
+                    <Button.Visibility>
+                        <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
+                            <Binding Path="OwnerId"/>
+                            <Binding Path="ClientId"/>
+                        </MultiBinding>
+                    </Button.Visibility>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+
+        <DataGrid x:Name="players" 
+                  ItemsSource="{Binding Players}"
+                  IsReadOnly="True"
+                  AutoGenerateColumns="False"
+                  Width="470"
+                  Margin="-10,0,0,0">
+
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="10" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock VerticalAlignment="Center" Text=""/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Name" Width="50" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ClientInfo.Name}" 
+                                       Foreground="{Binding Color, Converter={StaticResource myColorToColorConverter}}"
+                                       VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Width="*" CanUserResize="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="KICK"
                                 Command="{Binding ElementName=players, Path=DataContext.KickCommand}"
                                 CommandParameter="{Binding}"
-                                Margin="2">
-                            <Button.Visibility>
-                                <MultiBinding Converter="{StaticResource kickButtonVisibilityConverter}">
-                                    <Binding ElementName="players" Path="DataContext.OwnerId"/>
-                                    <Binding ElementName="players" Path="DataContext.ClientId"/>
-                                    <Binding Path="ClientInfo.Id"/>
-                                </MultiBinding>
-                            </Button.Visibility>
-                        </Button>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <StackPanel>
-            <StackPanel.Visibility>
-                <MultiBinding Converter="{StaticResource isOwnerToVisibilityConverter}">
-                    <Binding Path="OwnerId"/>
-                    <Binding Path="ClientId"/>
-                </MultiBinding>
-            </StackPanel.Visibility>
-            <TextBlock Text="Name"
-                   Margin="1,1,1,1"/>
-            <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="1,1,1,1"/>
+                                    Width="50"
+                                    Height="25">
+                                <Button.Visibility>
+                                    <MultiBinding Converter="{StaticResource kickButtonVisibilityConverter}">
+                                        <Binding ElementName="players" Path="DataContext.OwnerId"/>
+                                        <Binding ElementName="players" Path="DataContext.ClientId"/>
+                                        <Binding Path="ClientInfo.Id"/>
+                                    </MultiBinding>
+                                </Button.Visibility>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
-            <CheckBox Content="Private" IsChecked="{Binding Private, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="1,1,1,1"/>
-
-            <TextBlock Text="Password"
-                   Margin="1,1,1,1"/>
-            <TextBox Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="1,1,1,1"/>
-
-            <TextBlock Text="Games"
-                   Margin="1,1,1,1"/>
-            <TextBox Text="{Binding Games, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="1,1,1,1"/>
-
-            <TextBlock Text="Max players"
-                   Margin="1,1,1,1"/>
-            <TextBox Text="{Binding MaxPlayers, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
-                 Margin="1,1,1,1"/>
-
-            <Button Content="Edit room"
-                Command="{Binding EditRoomCommand}"
-                IsEnabled="{Binding CanEditRoom}"
-                Margin="1,1,1,1"/>
-        </StackPanel>
+            </DataGrid.Columns>
+        </DataGrid>
     </StackPanel>
 </UserControl>

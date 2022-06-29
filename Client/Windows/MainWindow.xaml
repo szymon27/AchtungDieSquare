@@ -7,12 +7,15 @@
         xmlns:vms="clr-namespace:Client.ViewModels"
         xmlns:vws="clr-namespace:Client.Views"
         mc:Ignorable="d"
-        Title="Achtung Die Square" Height="450" Width="800">
+        Title="Achtung Die Square" 
+        Height="550" 
+        Width="480"
+        ResizeMode="NoResize">
     <Window.DataContext>
         <vms:MainViewModel/>
     </Window.DataContext>
 
-    <Grid>
+    <Grid Background="Black">
         <Grid.Resources>
             <DataTemplate DataType="{x:Type vms:ConnectToServerViewModel}">
                 <vws:ConnectToServerView/>
@@ -31,6 +34,9 @@
             </DataTemplate>
         </Grid.Resources>
         
-        <ContentControl Content="{Binding CurrentViewModel, UpdateSourceTrigger=PropertyChanged}"/>
+        <ContentControl Content="{Binding CurrentViewModel, UpdateSourceTrigger=PropertyChanged}"
+                        Background="Black"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"/>
     </Grid>
 </Window>
